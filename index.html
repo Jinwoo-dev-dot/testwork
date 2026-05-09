@@ -1,4 +1,4 @@
-]<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -812,9 +812,7 @@ body{
     </div>
   </div>
 
-</div>
 
-<!-- MODALS -->
 <div class="overlay" id="m-subject">
   <div class="modal">
     <h3>과목 추가</h3>
@@ -979,8 +977,8 @@ body{
 
     <div id="complete-status" style="display:none;padding:10px 14px;background:var(--violet-l);border-radius:10px;font-size:12.5px;color:var(--t2);margin-bottom:10px"></div>
 
-    <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
-      <div id="complete-save-btns" style="display:none;gap:6px;display:none">
+    <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap">
+      <div id="complete-save-btns" style="display:none;gap:6px;flex-wrap:wrap">
         <button class="mb" onclick="saveCompleteToSec()">📂 섹션에 저장</button>
         <button class="mb" onclick="downloadCompleteFile()">⬇ 파일로 저장</button>
       </div>
@@ -1608,64 +1606,72 @@ function getFileIcon(name){
 function openFileViewer(idx){
   const p=curPerf();if(!p)return;
   const f=p.files[idx];if(!f)return;
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
 
-  // 이미지 또는 PDF — dataUrl
-  if(f.dataUrl){
-    if(isPdfFile(f.name)){
-      // PDF → base64를 blob으로 변환해서 새 탭에서 열기
-      const byteStr = atob(f.dataUrl.split(',')[1]);
-      const bytes = new Uint8Array(byteStr.length);
-      for(let i=0;i<byteStr.length;i++) bytes[i]=byteStr.charCodeAt(i);
-      const blob = new Blob([bytes],{type:'application/pdf'});
-      const url = URL.createObjectURL(blob);
+  // HWP/HWPX → 한컴독스 뷰어로 열기
+  if(ext==='hwp'||ext==='hwpx'){
+    if(f.dataUrl){
+      const byteStr=atob(f.dataUrl.split(',')[1]);
+      const bytes=new Uint8Array(byteStr.length);
+      for(let i=0;i<byteStr.length;i++)bytes[i]=byteStr.charCodeAt(i);
+      const blob=new Blob([bytes],{type:'application/x-hwp'});
+      const url=URL.createObjectURL(blob);
       window.open(url,'_blank');
-      return;
+    } else {
+      alert('파일을 다시 업로드해주세요.');
     }
-    // 이미지 — 앱 안에서 보기
-    const overlay=document.createElement('div');
-    overlay.className='overlay open';overlay.style.zIndex='2000';
-    overlay.innerHTML=`
-      <div class="modal" style="max-width:700px;max-height:90vh;display:flex;flex-direction:column">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0">
-          <h3>${getFileIcon(f.name)} ${f.name}</h3>
-          <button class="xbtn" onclick="this.closest('.overlay').remove()">✕</button>
-        </div>
-        <div style="flex:1;overflow:auto;text-align:center">
-          <img src="${f.dataUrl}" style="max-width:100%;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.3);display:block;margin:auto">
-        </div>
-      </div>`;
-    overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
-    document.body.appendChild(overlay);
     return;
   }
 
-  // blob URL fallback
-  const blobUrl = FILE_BLOBS[`${p.id}_${idx}`];
-  if(blobUrl){ window.open(blobUrl,'_blank'); return; }
+  // PDF → 새 탭에서 열기
+  if(ext==='pdf'){
+    if(f.dataUrl){
+      const byteStr=atob(f.dataUrl.split(',')[1]);
+      const bytes=new Uint8Array(byteStr.length);
+      for(let i=0;i<byteStr.length;i++)bytes[i]=byteStr.charCodeAt(i);
+      const blob=new Blob([bytes],{type:'application/pdf'});
+      window.open(URL.createObjectURL(blob),'_blank');
+    } else { alert('PDF를 다시 업로드해주세요.'); }
+    return;
+  }
 
-  // 텍스트 — 앱 안에서 모달로 보기
+  // 이미지 → 앱 안 모달
+  if(f.dataUrl&&['png','jpg','jpeg','gif','webp'].includes(ext)){
+    const ov=document.createElement('div');
+    ov.className='overlay open';ov.style.zIndex='2000';
+    ov.innerHTML=`<div class="modal" style="max-width:700px;max-height:90vh;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0">
+        <h3>${getFileIcon(f.name)} ${f.name}</h3>
+        <button class="xbtn" onclick="this.closest('.overlay').remove()">✕</button>
+      </div>
+      <div style="flex:1;overflow:auto;text-align:center">
+        <img src="${f.dataUrl}" style="max-width:100%;border-radius:10px;display:block;margin:auto">
+      </div></div>`;
+    ov.addEventListener('click',e=>{if(e.target===ov)ov.remove()});
+    document.body.appendChild(ov);
+    return;
+  }
+
+  // 텍스트 → 앱 안 모달
   if(f.content!=null){
-    const overlay=document.createElement('div');
-    overlay.className='overlay open';overlay.style.zIndex='2000';
-    overlay.innerHTML=`
-      <div class="modal" style="max-width:660px;max-height:88vh;display:flex;flex-direction:column">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <h3>${getFileIcon(f.name)} ${f.name}</h3>
-          <button class="xbtn" onclick="this.closest('.overlay').remove()">✕</button>
-        </div>
-        <div style="flex:1;overflow-y:auto;background:var(--bg);border:1px solid var(--violet-m);border-radius:10px;padding:16px;font-size:13px;line-height:1.9;color:var(--t1);white-space:pre-wrap;font-family:'JetBrains Mono',monospace">${esc(f.content)}</div>
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-          <button class="mb" onclick="insertFileToSec(${idx});this.closest('.overlay').remove()">📂 현재 섹션에 추가</button>
-          <button class="mb p" onclick="this.closest('.overlay').remove()">닫기</button>
-        </div>
-      </div>`;
-    overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
-    document.body.appendChild(overlay);
+    const ov=document.createElement('div');
+    ov.className='overlay open';ov.style.zIndex='2000';
+    ov.innerHTML=`<div class="modal" style="max-width:660px;max-height:88vh;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0">
+        <h3>${getFileIcon(f.name)} ${f.name}</h3>
+        <button class="xbtn" onclick="this.closest('.overlay').remove()">✕</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;background:var(--bg);border:1px solid var(--violet-m);border-radius:10px;padding:16px;font-size:13px;line-height:1.9;color:var(--t1);white-space:pre-wrap;font-family:'JetBrains Mono',monospace">${esc(f.content)}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="mb" onclick="insertFileToSec(${idx});this.closest('.overlay').remove()">📂 섹션에 추가</button>
+        <button class="mb p" onclick="this.closest('.overlay').remove()">닫기</button>
+      </div></div>`;
+    ov.addEventListener('click',e=>{if(e.target===ov)ov.remove()});
+    document.body.appendChild(ov);
     return;
   }
 
-  // HWP/DOC 등 — 미리보기 불가 안내
-  alert(`"${f.name}"\n\n이 파일 형식은 브라우저에서 열 수 없어요.\n(HWP, DOCX, PPTX 등은 앱에서 직접 열어야 해요)`);
+  alert(`"${f.name}"\n\n이 파일은 브라우저에서 직접 열 수 없어요.`);
 }
 
 function insertFileToSec(idx){
@@ -1859,15 +1865,16 @@ function isPdfFile(name){ return (name.split('.').pop()||'').toLowerCase()==='pd
 
 function readFileEntry(file, p, onDone){
   const entry = { name:file.name, size:file.size, content:null, dataUrl:null };
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
 
   if(isTextFile(file.name)){
-    const r = new FileReader();
-    r.onload = ev => { entry.content = ev.target.result; onDone(entry); };
+    const r=new FileReader();
+    r.onload=ev=>{entry.content=ev.target.result;onDone(entry);};
     r.readAsText(file,'UTF-8');
-  } else if(isImgFile(file.name) || isPdfFile(file.name)){
-    // 이미지·PDF 모두 base64로 저장 → 새로고침해도 항상 열림
-    const r = new FileReader();
-    r.onload = ev => { entry.dataUrl = ev.target.result; onDone(entry); };
+  } else if(isImgFile(file.name)||isPdfFile(file.name)||ext==='hwp'||ext==='hwpx'||ext==='doc'||ext==='docx'||ext==='ppt'||ext==='pptx'){
+    // 모든 파일을 base64로 저장 → 항상 열 수 있음
+    const r=new FileReader();
+    r.onload=ev=>{entry.dataUrl=ev.target.result;onDone(entry);};
     r.readAsDataURL(file);
   } else {
     onDone(entry);
@@ -2140,7 +2147,7 @@ ${allContent || '(내용 없음 — 창의적으로 작성해줘)'}
     statusEl.style.display = 'none';
     resultEl.style.display = 'block';
     resultEl.textContent = lastCompleteText;
-    saveBtns.style.display = 'flex';
+    saveBtns.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
     goBtn.disabled = false;
     goBtn.textContent = '🔄 다시 생성';
   } catch(err){
@@ -2176,6 +2183,7 @@ function downloadCompleteFile(){
   a.download = filename;
   a.click();
 }
+
 
 // ── 내보내기 ──
 function exportAll(){
