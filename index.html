@@ -1203,7 +1203,7 @@ async function initStorage(){
       setSyncStatus('ok');
     }
   } catch(e){
-    console.warn('Supabase 연결 실패, 로컬 모드:', e);
+    // Claude 아티팩트 환경 등 외부 차단 시 조용히 로컬 모드로
     setSyncStatus('offline');
   }
 }
@@ -1226,7 +1226,7 @@ function save(){
       await sbSet(JSON.stringify(D));
       setSyncStatus('ok');
     } catch(e){
-      setSyncStatus('error');
+      setSyncStatus('offline');
     }
   }, 1500);
 }
