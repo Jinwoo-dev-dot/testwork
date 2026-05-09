@@ -1587,10 +1587,12 @@ function renderMetaHtml(p){
 function renderFiles(p){
   if(!(p.files||[]).length) return `<div style="font-size:11px;color:var(--t3);text-align:center;padding:6px 0">업로드된 파일 없음</div>`;
   return (p.files||[]).map((f,i)=>{
-    const openable = f.content != null;
-    const style = openable ? 'color:var(--violet);text-decoration:underline;text-underline-offset:2px;cursor:pointer' : 'color:var(--t3)';
+    const openable = f.content!=null || f.dataUrl!=null || FILE_BLOBS[`${p.id}_${i}`];
+    const style = openable
+      ? 'color:var(--violet);text-decoration:underline;text-underline-offset:2px;cursor:pointer'
+      : 'color:var(--t2)';
     const click = openable ? `onclick="openFileViewer(${i})"` : '';
-    return `<div class="fi-item" style="${openable?'cursor:pointer':''}">
+    return `<div class="fi-item">
       <span>${getFileIcon(f.name)}</span>
       <span class="fi-name" style="${style}" ${click}>${f.name}</span>
       <span class="fi-del" onclick="delFile(${i},event)">✕</span>
@@ -1600,29 +1602,66 @@ function renderFiles(p){
 
 function getFileIcon(name){
   const ext=(name.split('.').pop()||'').toLowerCase();
-  return {pdf:'📕',hwp:'📝',hwpx:'📝',doc:'📘',docx:'📘',ppt:'📙',pptx:'📙',xls:'📗',xlsx:'📗',txt:'📄',md:'📄',png:'🖼',jpg:'🖼',jpeg:'🖼',gif:'🖼'}[ext]||'📎';
+  return {pdf:'📕',hwp:'📝',hwpx:'📝',doc:'📘',docx:'📘',ppt:'📙',pptx:'📙',xls:'📗',xlsx:'📗',txt:'📄',md:'📄',png:'🖼',jpg:'🖼',jpeg:'🖼',gif:'🖼',webp:'🖼'}[ext]||'📎';
 }
 
 function openFileViewer(idx){
   const p=curPerf();if(!p)return;
-  const f=p.files[idx];if(!f?.content)return;
-  const overlay=document.createElement('div');
-  overlay.className='overlay open';
-  overlay.style.zIndex='2000';
-  overlay.innerHTML=`
-    <div class="modal" style="max-width:660px;max-height:88vh;display:flex;flex-direction:column">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <h3>${getFileIcon(f.name)} ${f.name}</h3>
-        <button class="xbtn" onclick="this.closest('.overlay').remove()">✕</button>
-      </div>
-      <div style="flex:1;overflow-y:auto;background:var(--bg);border:1px solid var(--violet-m);border-radius:10px;padding:16px;font-size:13px;line-height:1.9;color:var(--t1);white-space:pre-wrap;font-family:'JetBrains Mono',monospace">${esc(f.content)}</div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-        <button class="mb" onclick="insertFileToSec(${idx});this.closest('.overlay').remove()">📂 현재 섹션에 추가</button>
-        <button class="mb p" onclick="this.closest('.overlay').remove()">닫기</button>
-      </div>
-    </div>`;
-  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
-  document.body.appendChild(overlay);
+  const f=p.files[idx];if(!f)return;
+
+  // 이미지 또는 PDF — dataUrl로 앱 안에서 바로 보기
+  if(f.dataUrl){
+    const isPdf = isPdfFile(f.name);
+    const overlay=document.createElement('div');
+    overlay.className='overlay open';overlay.style.zIndex='2000';
+    overlay.innerHTML=`
+      <div class="modal" style="max-width:780px;width:94vw;max-height:92vh;height:92vh;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0">
+          <h3>${getFileIcon(f.name)} ${f.name}</h3>
+          <button class="xbtn" onclick="this.closest('.overlay').remove()">✕</button>
+        </div>
+        <div style="flex:1;overflow:auto;border-radius:10px;overflow:hidden">
+          ${isPdf
+            ? `<embed src="${f.dataUrl}" type="application/pdf" style="width:100%;height:100%;min-height:500px;border-radius:10px">`
+            : `<img src="${f.dataUrl}" style="max-width:100%;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.3);display:block;margin:auto">`
+          }
+        </div>
+      </div>`;
+    overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
+    document.body.appendChild(overlay);
+    return;
+  }
+
+  // PDF blob URL fallback (구버전 데이터)
+  const blobUrl = FILE_BLOBS[`${p.id}_${idx}`];
+  if(blobUrl){
+    window.open(blobUrl,'_blank');
+    return;
+  }
+
+  // 텍스트 — 앱 안에서 모달로 보기
+  if(f.content!=null){
+    const overlay=document.createElement('div');
+    overlay.className='overlay open';overlay.style.zIndex='2000';
+    overlay.innerHTML=`
+      <div class="modal" style="max-width:660px;max-height:88vh;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <h3>${getFileIcon(f.name)} ${f.name}</h3>
+          <button class="xbtn" onclick="this.closest('.overlay').remove()">✕</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;background:var(--bg);border:1px solid var(--violet-m);border-radius:10px;padding:16px;font-size:13px;line-height:1.9;color:var(--t1);white-space:pre-wrap;font-family:'JetBrains Mono',monospace">${esc(f.content)}</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+          <button class="mb" onclick="insertFileToSec(${idx});this.closest('.overlay').remove()">📂 현재 섹션에 추가</button>
+          <button class="mb p" onclick="this.closest('.overlay').remove()">닫기</button>
+        </div>
+      </div>`;
+    overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
+    document.body.appendChild(overlay);
+    return;
+  }
+
+  // HWP/DOC 등 — 미리보기 불가 안내
+  alert(`"${f.name}"\n\n이 파일 형식은 브라우저에서 열 수 없어요.\n(HWP, DOCX, PPTX 등은 앱에서 직접 열어야 해요)`);
 }
 
 function insertFileToSec(idx){
@@ -1804,33 +1843,44 @@ function updateExam(subId,grade,idx,field,val){
   save();
 }
 
-// ── 파일 ──
-const TEXT_EXTS = ['txt','md','csv','json','xml','html','css','js','py'];
+// 업로드된 파일의 blob URL 임시 보관 (새로고침 시 사라짐 — File 객체 자체를 유지)
+const FILE_BLOBS = {}; // key: perfId_idx → blob URL
 
-function isTextFile(name){
-  return TEXT_EXTS.includes(name.split('.').pop()?.toLowerCase());
+const TEXT_EXTS = ['txt','md','csv','json','xml','html','css','js','py'];
+const IMG_EXTS  = ['png','jpg','jpeg','gif','webp'];
+
+function isTextFile(name){ return TEXT_EXTS.includes((name.split('.').pop()||'').toLowerCase()); }
+function isImgFile(name){ return IMG_EXTS.includes((name.split('.').pop()||'').toLowerCase()); }
+function isPdfFile(name){ return (name.split('.').pop()||'').toLowerCase()==='pdf'; }
+
+function readFileEntry(file, p, onDone){
+  const entry = { name:file.name, size:file.size, content:null, dataUrl:null };
+
+  if(isTextFile(file.name)){
+    const r = new FileReader();
+    r.onload = ev => { entry.content = ev.target.result; onDone(entry); };
+    r.readAsText(file,'UTF-8');
+  } else if(isImgFile(file.name) || isPdfFile(file.name)){
+    // 이미지·PDF 모두 base64로 저장 → 새로고침해도 항상 열림
+    const r = new FileReader();
+    r.onload = ev => { entry.dataUrl = ev.target.result; onDone(entry); };
+    r.readAsDataURL(file);
+  } else {
+    onDone(entry);
+  }
 }
 
 function handleFiles(e){
   const p=curPerf();if(!p)return;
   if(!p.files)p.files=[];
-  const files = Array.from(e.target.files);
-  let pending = files.length;
-
+  const files=Array.from(e.target.files);
+  let pending=files.length;
   files.forEach(f=>{
-    if(isTextFile(f.name)){
-      const reader = new FileReader();
-      reader.onload = (ev)=>{
-        p.files.push({name:f.name, size:f.size, content:ev.target.result});
-        pending--;
-        if(pending===0){ save(); refreshFileList(p); }
-      };
-      reader.readAsText(f,'UTF-8');
-    } else {
-      p.files.push({name:f.name, size:f.size, content:null});
+    readFileEntry(f, p, entry=>{
+      p.files.push(entry);
       pending--;
       if(pending===0){ save(); refreshFileList(p); }
-    }
+    });
   });
   e.target.value='';
 }
@@ -1842,22 +1892,15 @@ function handleDrop(e){
   const files=Array.from(e.dataTransfer.files);
   let pending=files.length;
   files.forEach(f=>{
-    if(isTextFile(f.name)){
-      const reader=new FileReader();
-      reader.onload=(ev)=>{
-        p.files.push({name:f.name,size:f.size,content:ev.target.result});
-        pending--;if(pending===0){save();refreshFileList(p);}
-      };
-      reader.readAsText(f,'UTF-8');
-    } else {
-      p.files.push({name:f.name,size:f.size,content:null});
-      pending--;if(pending===0){save();refreshFileList(p);}
-    }
+    readFileEntry(f, p, entry=>{
+      p.files.push(entry);
+      pending--;
+      if(pending===0){ save(); refreshFileList(p); }
+    });
   });
 }
 
 function refreshFileList(p){
-  // 사이드바 파일 목록 갱신
   const fl1=document.getElementById('sb-file-list');
   const fl2=document.getElementById('file-list-wrap');
   if(fl1)fl1.innerHTML=renderFiles(p);
@@ -1867,7 +1910,11 @@ function refreshFileList(p){
 function delFile(idx,e){
   e.stopPropagation();
   const p=curPerf();if(!p)return;
-  p.files.splice(idx,1);save();
+  // blob URL 해제
+  const blobKey=`${p.id}_${idx}`;
+  if(FILE_BLOBS[blobKey]){ URL.revokeObjectURL(FILE_BLOBS[blobKey]); delete FILE_BLOBS[blobKey]; }
+  p.files.splice(idx,1);
+  save();
   refreshFileList(p);
 }
 
