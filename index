@@ -646,6 +646,9 @@ body{
   margin-bottom:3px;
 }
 .fi-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fi-clickable{cursor:pointer;color:var(--accent,var(--violet));text-decoration:underline;text-underline-offset:2px;}
+.fi-clickable:hover{color:var(--violet)}
+.fi-open-badge{font-size:9.5px;font-weight:700;background:var(--violet-l);color:var(--violet);border:1px solid var(--violet-m);border-radius:5px;padding:1px 5px;margin-right:3px;flex-shrink:0}
 .fi-del{cursor:pointer;color:var(--t3);font-size:11px;transition:color .1s}
 .fi-del:hover{color:var(--rose)}
 
@@ -1525,9 +1528,59 @@ function renderMetaHtml(p){
 }
 
 function renderFiles(p){
-  return (p.files||[]).map((f,i)=>
-    `<div class="fi-item"><span>📄</span><span class="fi-name">${f.name}</span><span class="fi-del" onclick="delFile(${i},event)">✕</span></div>`
-  ).join('');
+  return (p.files||[]).map((f,i)=>{
+    const canOpen = f.content != null; // 텍스트 내용이 저장된 파일
+    return `<div class="fi-item">
+      <span>${getFileIcon(f.name)}</span>
+      <span class="fi-name ${canOpen?'fi-clickable':''}" 
+        ${canOpen ? `onclick="openFileViewer(${i})" title="클릭해서 열기"` : ''}
+      >${f.name}</span>
+      ${canOpen ? '<span class="fi-open-badge">열기</span>' : ''}
+      <span class="fi-del" onclick="delFile(${i},event)">✕</span>
+    </div>`;
+  }).join('');
+}
+
+function getFileIcon(name){
+  const ext = name.split('.').pop()?.toLowerCase();
+  const icons = {pdf:'📕',hwp:'📝',hwpx:'📝',doc:'📘',docx:'📘',ppt:'📙',pptx:'📙',xls:'📗',xlsx:'📗',txt:'📄',md:'📄',png:'🖼',jpg:'🖼',jpeg:'🖼'};
+  return icons[ext] || '📎';
+}
+
+function openFileViewer(idx){
+  const p = curPerf(); if(!p) return;
+  const f = p.files[idx]; if(!f?.content) return;
+
+  // 모달로 파일 내용 보여주기
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay open';
+  overlay.style.zIndex = '2000';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:600px;max-height:85vh;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3 style="font-size:14px">${getFileIcon(f.name)} ${f.name}</h3>
+        <button class="xbtn" onclick="this.closest('.overlay').remove()">✕</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;background:var(--bg);border:1px solid var(--violet-m);border-radius:10px;padding:16px;font-size:13px;line-height:1.8;color:var(--t1);white-space:pre-wrap;font-family:'JetBrains Mono',monospace">${esc(f.content)}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="mb" onclick="insertFileToSec(${idx});this.closest('.overlay').remove()">📂 현재 섹션에 추가</button>
+        <button class="mb p" onclick="this.closest('.overlay').remove()">닫기</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+function insertFileToSec(idx){
+  const p = curPerf(); const sec = curSec();
+  if(!p || !sec) return;
+  const f = p.files[idx]; if(!f?.content) return;
+  const add = sec.content.trim() ? sec.content + '\n\n---\n\n' + f.content : f.content;
+  sec.content = add;
+  save();
+  const ed = document.getElementById('main-editor');
+  if(ed) ed.innerText = sec.content;
+  renderDetailSidebar();
 }
 
 function onEdit(el){
@@ -1698,31 +1751,70 @@ function updateExam(subId,grade,idx,field,val){
 }
 
 // ── 파일 ──
+const TEXT_EXTS = ['txt','md','csv','json','xml','html','css','js','py'];
+
+function isTextFile(name){
+  return TEXT_EXTS.includes(name.split('.').pop()?.toLowerCase());
+}
+
 function handleFiles(e){
   const p=curPerf();if(!p)return;
   if(!p.files)p.files=[];
-  Array.from(e.target.files).forEach(f=>p.files.push({name:f.name,size:f.size}));
-  save();
-  const fl=document.getElementById('file-list-wrap');
-  if(fl)fl.innerHTML=renderFiles(p);
+  const files = Array.from(e.target.files);
+  let pending = files.length;
+
+  files.forEach(f=>{
+    if(isTextFile(f.name)){
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        p.files.push({name:f.name, size:f.size, content:ev.target.result});
+        pending--;
+        if(pending===0){ save(); refreshFileList(p); }
+      };
+      reader.readAsText(f,'UTF-8');
+    } else {
+      p.files.push({name:f.name, size:f.size, content:null});
+      pending--;
+      if(pending===0){ save(); refreshFileList(p); }
+    }
+  });
+  e.target.value='';
 }
 
 function handleDrop(e){
   e.preventDefault();e.currentTarget.classList.remove('drag');
   const p=curPerf();if(!p)return;
   if(!p.files)p.files=[];
-  Array.from(e.dataTransfer.files).forEach(f=>p.files.push({name:f.name,size:f.size}));
-  save();
-  const fl=document.getElementById('file-list-wrap');
-  if(fl)fl.innerHTML=renderFiles(p);
+  const files=Array.from(e.dataTransfer.files);
+  let pending=files.length;
+  files.forEach(f=>{
+    if(isTextFile(f.name)){
+      const reader=new FileReader();
+      reader.onload=(ev)=>{
+        p.files.push({name:f.name,size:f.size,content:ev.target.result});
+        pending--;if(pending===0){save();refreshFileList(p);}
+      };
+      reader.readAsText(f,'UTF-8');
+    } else {
+      p.files.push({name:f.name,size:f.size,content:null});
+      pending--;if(pending===0){save();refreshFileList(p);}
+    }
+  });
+}
+
+function refreshFileList(p){
+  // 사이드바 파일 목록 갱신
+  const fl1=document.getElementById('sb-file-list');
+  const fl2=document.getElementById('file-list-wrap');
+  if(fl1)fl1.innerHTML=renderFiles(p);
+  if(fl2)fl2.innerHTML=renderFiles(p);
 }
 
 function delFile(idx,e){
   e.stopPropagation();
   const p=curPerf();if(!p)return;
   p.files.splice(idx,1);save();
-  const fl=document.getElementById('file-list-wrap');
-  if(fl)fl.innerHTML=renderFiles(p);
+  refreshFileList(p);
 }
 
 function openEditPerfFromDetail(){
