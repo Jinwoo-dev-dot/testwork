@@ -1770,7 +1770,14 @@ async function askAI(preset){
       })
     });
     const data=await resp.json();
-    const text=data.content?.map(c=>c.text||'').join('')||'응답을 받지 못했습니다.';
+
+    if(!resp.ok||data.error){
+      resultEl.innerHTML=`<div class="ai-result" style="color:#dc2626">❌ API 오류 (${resp.status}): ${data.error?.message||JSON.stringify(data).slice(0,200)}</div>`;
+      if(sendBtn)sendBtn.disabled=false;
+      return;
+    }
+
+    const text=data.content?.map(c=>c.text||'').join('')||'';
 
     // 섹션에 자동 삽입
     sec.content=text.trim();
@@ -2141,7 +2148,25 @@ ${allContent || '(내용 없음 — 창의적으로 작성해줘)'}
       })
     });
     const data = await resp.json();
-    const text = data.content?.map(c=>c.text||'').join('') || '생성 실패';
+
+    // API 에러 상세 표시
+    if(!resp.ok || data.error){
+      const errMsg = data.error?.message || JSON.stringify(data);
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = `❌ API 오류 (${resp.status}): ${errMsg}`;
+      goBtn.disabled = false;
+      goBtn.textContent = '🤖 생성하기';
+      return;
+    }
+
+    const text = data.content?.map(c=>c.text||'').join('') || '';
+    if(!text){
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = `❌ 빈 응답: ${JSON.stringify(data).slice(0,200)}`;
+      goBtn.disabled = false;
+      goBtn.textContent = '🤖 생성하기';
+      return;
+    }
     lastCompleteText = text.trim();
 
     statusEl.style.display = 'none';
@@ -2151,6 +2176,7 @@ ${allContent || '(내용 없음 — 창의적으로 작성해줘)'}
     goBtn.disabled = false;
     goBtn.textContent = '🔄 다시 생성';
   } catch(err){
+    statusEl.style.display = 'block';
     statusEl.innerHTML = `❌ 오류: ${err.message}`;
     goBtn.disabled = false;
     goBtn.textContent = '🤖 생성하기';
