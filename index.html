@@ -1481,13 +1481,9 @@ function renderDetailSidebar(){
       <!-- 파일 업로드 -->
       <div style="margin-top:10px">
         <div style="font-size:9.5px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">완성 파일</div>
-        <div style="display:flex;gap:5px;margin-bottom:5px">
-          <button onclick="document.getElementById('${fileId}').click()" style="flex:1;padding:5px;border-radius:7px;border:1px solid var(--violet-m);background:transparent;color:var(--t2);font-size:11px;font-family:inherit;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--violet)';this.style.color='var(--violet)'" onmouseout="this.style.borderColor='var(--violet-m)';this.style.color='var(--t2)'">⬆ 업로드</button>
-          <button onclick="document.getElementById('${fileId}-open').click()" style="flex:1;padding:5px;border-radius:7px;border:1px solid var(--violet-m);background:transparent;color:var(--t2);font-size:11px;font-family:inherit;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--violet)';this.style.color='var(--violet)'" onmouseout="this.style.borderColor='var(--violet-m)';this.style.color='var(--t2)'">📂 열기</button>
-        </div>
+        <button onclick="document.getElementById('${fileId}').click()" style="width:100%;padding:6px;border-radius:7px;border:1px dashed var(--violet-m);background:transparent;color:var(--t2);font-size:11px;font-family:inherit;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--violet)';this.style.color='var(--violet)'" onmouseout="this.style.borderColor='var(--violet-m)';this.style.color='var(--t2)'">⬆ 파일 업로드</button>
         <input type="file" id="${fileId}" multiple accept=".pdf,.hwp,.hwpx,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.png,.jpg,.jpeg" style="display:none" onchange="handleFiles(event)">
-        <input type="file" id="${fileId}-open" style="display:none" accept=".md,.txt" onchange="handleOpenFile(event)">
-        <div id="sb-file-list">${renderFiles(p)}</div>
+        <div id="sb-file-list" style="margin-top:6px">${renderFiles(p)}</div>
       </div>
     </div>
     <div class="ds-list" id="ds-list">`;
@@ -1578,13 +1574,10 @@ function renderMetaHtml(p){
         ondrop="handleDrop(event)">
         <input type="file" id="${fileId}" multiple accept=".pdf,.hwp,.hwpx,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.png,.jpg,.jpeg" style="display:none"
           onchange="handleFiles(event)">
-        <input type="file" id="${fileId}-open" style="display:none" accept=".md,.txt"
-          onchange="handleOpenFile(event)">
         <div class="fz-icon">📎</div>
         <div class="fz-txt">완성 파일</div>
         <div class="fz-btns">
-          <button onclick="event.stopPropagation();document.getElementById('${fileId}').click()" class="fz-action-btn">⬆ 업로드</button>
-          <button onclick="event.stopPropagation();document.getElementById('${fileId}-open').click()" class="fz-action-btn">📂 열기</button>
+          <button onclick="event.stopPropagation();document.getElementById('${fileId}').click()" class="fz-action-btn">⬆ 파일 업로드</button>
         </div>
         <div class="file-list" id="file-list-wrap">${renderFiles(p)}</div>
       </div>
@@ -1592,46 +1585,43 @@ function renderMetaHtml(p){
 }
 
 function renderFiles(p){
+  if(!(p.files||[]).length) return `<div style="font-size:11px;color:var(--t3);text-align:center;padding:6px 0">업로드된 파일 없음</div>`;
   return (p.files||[]).map((f,i)=>{
-    const canOpen = f.content != null; // 텍스트 내용이 저장된 파일
-    return `<div class="fi-item">
+    const openable = f.content != null;
+    const style = openable ? 'color:var(--violet);text-decoration:underline;text-underline-offset:2px;cursor:pointer' : 'color:var(--t3)';
+    const click = openable ? `onclick="openFileViewer(${i})"` : '';
+    return `<div class="fi-item" style="${openable?'cursor:pointer':''}">
       <span>${getFileIcon(f.name)}</span>
-      <span class="fi-name ${canOpen?'fi-clickable':''}" 
-        ${canOpen ? `onclick="openFileViewer(${i})" title="클릭해서 열기"` : ''}
-      >${f.name}</span>
-      ${canOpen ? '<span class="fi-open-badge">열기</span>' : ''}
+      <span class="fi-name" style="${style}" ${click}>${f.name}</span>
       <span class="fi-del" onclick="delFile(${i},event)">✕</span>
     </div>`;
   }).join('');
 }
 
 function getFileIcon(name){
-  const ext = name.split('.').pop()?.toLowerCase();
-  const icons = {pdf:'📕',hwp:'📝',hwpx:'📝',doc:'📘',docx:'📘',ppt:'📙',pptx:'📙',xls:'📗',xlsx:'📗',txt:'📄',md:'📄',png:'🖼',jpg:'🖼',jpeg:'🖼'};
-  return icons[ext] || '📎';
+  const ext=(name.split('.').pop()||'').toLowerCase();
+  return {pdf:'📕',hwp:'📝',hwpx:'📝',doc:'📘',docx:'📘',ppt:'📙',pptx:'📙',xls:'📗',xlsx:'📗',txt:'📄',md:'📄',png:'🖼',jpg:'🖼',jpeg:'🖼',gif:'🖼'}[ext]||'📎';
 }
 
 function openFileViewer(idx){
-  const p = curPerf(); if(!p) return;
-  const f = p.files[idx]; if(!f?.content) return;
-
-  // 모달로 파일 내용 보여주기
-  const overlay = document.createElement('div');
-  overlay.className = 'overlay open';
-  overlay.style.zIndex = '2000';
-  overlay.innerHTML = `
-    <div class="modal" style="max-width:600px;max-height:85vh;display:flex;flex-direction:column">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <h3 style="font-size:14px">${getFileIcon(f.name)} ${f.name}</h3>
+  const p=curPerf();if(!p)return;
+  const f=p.files[idx];if(!f?.content)return;
+  const overlay=document.createElement('div');
+  overlay.className='overlay open';
+  overlay.style.zIndex='2000';
+  overlay.innerHTML=`
+    <div class="modal" style="max-width:660px;max-height:88vh;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3>${getFileIcon(f.name)} ${f.name}</h3>
         <button class="xbtn" onclick="this.closest('.overlay').remove()">✕</button>
       </div>
-      <div style="flex:1;overflow-y:auto;background:var(--bg);border:1px solid var(--violet-m);border-radius:10px;padding:16px;font-size:13px;line-height:1.8;color:var(--t1);white-space:pre-wrap;font-family:'JetBrains Mono',monospace">${esc(f.content)}</div>
+      <div style="flex:1;overflow-y:auto;background:var(--bg);border:1px solid var(--violet-m);border-radius:10px;padding:16px;font-size:13px;line-height:1.9;color:var(--t1);white-space:pre-wrap;font-family:'JetBrains Mono',monospace">${esc(f.content)}</div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
         <button class="mb" onclick="insertFileToSec(${idx});this.closest('.overlay').remove()">📂 현재 섹션에 추가</button>
         <button class="mb p" onclick="this.closest('.overlay').remove()">닫기</button>
       </div>
     </div>`;
-  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
   document.body.appendChild(overlay);
 }
 
