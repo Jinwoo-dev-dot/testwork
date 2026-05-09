@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="수행평가">
+<meta name="theme-color" content="#f5f3ff">
+<title>수행평가 노트</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:      #f5f3ff;
+  --bg2:     #eee9ff;
+  --white:   #ffffff;
+  --card:    #ffffffcc;
+
+  --lavender: #c4b5fd;
+  --violet:   #8b5cf6;
+  --violet-l: #ede9fe;
+  --violet-m: #ddd6fe;
+
+  --rose:     #fda4af;
+  --rose-l:   #fff1f2;
+  --rose-m:   #ffe4e6;
+
+  --sky:      #7dd3fc;
+  --sky-l:    #f0f9ff;
+  --sky-m:    #e0f2fe;
+
+  --mint:     #6ee7b7;
+  --mint-l:   #f0fdf4;
+  --mint-m:   #d1fae5;
+
+  --peach:    #fdba74;
+  --peach-l:  #fff7ed;
+  --peach-m:  #fed7aa;
+
+  --lemon:    #fde68a;
+  --lemon-l:  #fefce8;
+
+  --t1:   #3b3256;
+  --t2:   #7c6fa0;
+  --t3:   #b0a3cc;
+  --t4:   #d4cce8;
+
+  --shadow-sm: 0 2px 8px rgba(139,92,246,.08);
+  --shadow:    0 4px 20px rgba(139,92,246,.12);
+  --shadow-lg: 0 8px 40px rgba(139,92,246,.18);
+}
+
+body{
+  font-family:'Pretendard','Noto Sans KR',sans-serif;
+  background:var(--bg);
+  color:var(--t1);
+  height:100vh;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  font-size:14px;
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+
+/* ══ TOPBAR ══ */
+.topbar{
+  height:56px;
+  background:var(--white);
+  border-bottom:1px solid var(--violet-m);
+  display:flex;
+  align-items:center;
+  padding:0 28px;
+  gap:14px;
+  flex-shrink:0;
+  box-shadow:var(--shadow-sm);
+}
+.logo{
+  font-size:15px;font-weight:800;
+  background:linear-gradient(135deg,#8b5cf6,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:.5px;
+}
+.breadcrumb{
+  display:flex;align-items:center;gap:6px;
+  font-size:12.5px;color:var(--t3);
+}
+.breadcrumb .bc-sep{color:var(--t4)}
+.breadcrumb .bc-item{cursor:pointer;transition:color .15s;font-weight:500}
+.breadcrumb .bc-item:hover{color:var(--violet)}
+.breadcrumb .bc-item.cur{color:var(--t1);font-weight:700;cursor:default}
+.sp{flex:1}
+.top-btns{display:flex;gap:8px}
+.tbtn{
+  padding:7px 14px;border-radius:20px;
+  border:1.5px solid var(--violet-m);
+  background:transparent;color:var(--t2);
+  font-size:12px;font-family:inherit;cursor:pointer;
+  transition:all .18s;font-weight:600;
+}
+.tbtn:hover{border-color:var(--violet);color:var(--violet);background:var(--violet-l)}
+.tbtn.primary{
+  background:linear-gradient(135deg,#8b5cf6,#a78bfa);
+  border-color:transparent;color:#fff;
+}
+.tbtn.primary:hover{opacity:.88;transform:translateY(-1px)}
+
+/* ══ SCREEN CONTAINER ══ */
+.screens{flex:1;overflow:hidden;position:relative}
+.screen{
+  position:absolute;inset:0;
+  display:none;
+  flex-direction:column;
+  overflow:hidden;
+}
+.screen.active{display:flex}
+
+/* ══ PAGE: 과목 선택 ══ */
+#pg-subjects{
+  align-items:center;
+  justify-content:center;
+  background:var(--bg);
+  padding:40px;
+  gap:0;
+}
+.pg-title{
+  font-size:13px;font-weight:700;
+  color:var(--t3);letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:10px;
+  text-align:center;
+}
+.pg-heading{
+  font-size:28px;font-weight:800;
+  color:var(--t1);
+  text-align:center;
+  margin-bottom:6px;
+}
+.pg-sub{
+  font-size:13.5px;color:var(--t2);
+  text-align:center;
+  margin-bottom:40px;
+}
+
+.subjects-grid{
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  justify-content:center;
+  max-width:820px;
+}
+.subject-card{
+  width:160px;
+  aspect-ratio:1/1.1;
+  border-radius:22px;
+  border:2px solid transparent;
+  background:var(--white);
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  cursor:pointer;
+  transition:all .22s cubic-bezier(.34,1.56,.64,1);
+  position:relative;
+  overflow:hidden;
+}
+.subject-card::before{
+  content:'';
+  position:absolute;inset:0;
+  opacity:0;
+  transition:opacity .2s;
+  border-radius:20px;
+}
+.subject-card:hover{
+  transform:translateY(-6px) scale(1.03);
+  box-shadow:var(--shadow-lg);
+}
+.subject-card:hover::before{opacity:1}
+.subject-card .sc-icon{font-size:36px;position:relative}
+.subject-card .sc-name{
+  font-size:13.5px;font-weight:700;
+  color:var(--t1);position:relative;
+}
+.subject-card .sc-count{
+  font-size:11px;color:var(--t2);position:relative;
+}
+.add-subject-card{
+  width:160px;aspect-ratio:1/1.1;
+  border-radius:22px;
+  border:2px dashed var(--t4);
+  background:transparent;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:8px;cursor:pointer;
+  transition:all .18s;color:var(--t3);
+  font-family:inherit;
+}
+.add-subject-card:hover{
+  border-color:var(--violet);color:var(--violet);
+  background:var(--violet-l);
+}
+.add-subject-card .plus{font-size:28px}
+.add-subject-card span{font-size:12.5px;font-weight:600}
+
+/* 과목별 색상 */
+.sc-bio{background:linear-gradient(135deg,#f0fdf4,#dcfce7)!important}
+.sc-bio::before{background:linear-gradient(135deg,rgba(110,231,183,.3),rgba(52,211,153,.1))}
+.sc-bio:hover{border-color:var(--mint)!important}
+.sc-phys{background:linear-gradient(135deg,#f0f9ff,#dbeafe)!important}
+.sc-phys::before{background:linear-gradient(135deg,rgba(125,211,252,.3),rgba(96,165,250,.1))}
+.sc-phys:hover{border-color:var(--sky)!important}
+.sc-chem{background:linear-gradient(135deg,#fff7ed,#ffedd5)!important}
+.sc-chem::before{background:linear-gradient(135deg,rgba(253,186,116,.3),rgba(251,146,60,.1))}
+.sc-chem:hover{border-color:var(--peach)!important}
+.sc-earth{background:linear-gradient(135deg,#eff6ff,#dbeafe)!important}
+.sc-earth:hover{border-color:#93c5fd!important}
+.sc-math{background:linear-gradient(135deg,#fdf4ff,#fae8ff)!important}
+.sc-math::before{background:linear-gradient(135deg,rgba(196,181,253,.3),rgba(167,139,250,.1))}
+.sc-math:hover{border-color:var(--lavender)!important}
+.sc-default{background:linear-gradient(135deg,#fff1f2,#ffe4e6)!important}
+.sc-default:hover{border-color:var(--rose)!important}
+
+/* ══ PAGE: 학년 선택 ══ */
+#pg-grades{
+  align-items:center;
+  justify-content:center;
+  background:var(--bg);
+  padding:40px;
+  gap:0;
+}
+.grades-grid{
+  display:flex;gap:20px;flex-wrap:wrap;
+  justify-content:center;
+}
+.grade-card{
+  width:200px;height:220px;
+  border-radius:24px;
+  border:2px solid var(--violet-m);
+  background:var(--white);
+  box-shadow:var(--shadow);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:12px;cursor:pointer;
+  transition:all .22s cubic-bezier(.34,1.56,.64,1);
+  position:relative;overflow:hidden;
+}
+.grade-card:hover{
+  transform:translateY(-6px) scale(1.04);
+  border-color:var(--violet);
+  box-shadow:var(--shadow-lg);
+  background:var(--violet-l);
+}
+.grade-card .gc-num{
+  font-size:52px;font-weight:800;
+  background:linear-gradient(135deg,#8b5cf6,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.grade-card .gc-label{font-size:14px;font-weight:700;color:var(--t1)}
+.grade-card .gc-count{font-size:11.5px;color:var(--t2)}
+
+/* ══ PAGE: 수행평가 선택 ══ */
+#pg-perfs{
+  align-items:center;
+  justify-content:center;
+  background:var(--bg);
+  padding:40px;
+  gap:0;
+}
+.perfs-wrap{
+  display:flex;flex-direction:column;gap:0;
+  width:100%;max-width:680px;
+}
+.perfs-header{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+}
+.perfs-header h2{font-size:16px;font-weight:800;color:var(--t1)}
+.perf-list{display:flex;flex-direction:column;gap:10px}
+.perf-item{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 20px;
+  background:var(--white);
+  border:2px solid var(--violet-m);
+  border-radius:16px;
+  cursor:pointer;
+  transition:all .2s;
+  box-shadow:var(--shadow-sm);
+}
+.perf-item:hover{
+  border-color:var(--violet);
+  transform:translateX(6px);
+  box-shadow:var(--shadow);
+}
+.pi-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.pi-info{flex:1}
+.pi-name{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.pi-meta{font-size:11.5px;color:var(--t2)}
+.pi-score{
+  font-size:13px;font-weight:800;
+  padding:4px 12px;border-radius:12px;
+  font-family:'JetBrains Mono',monospace;
+}
+.pi-arr{font-size:16px;color:var(--t3);transition:transform .2s}
+.perf-item:hover .pi-arr{transform:translateX(4px);color:var(--violet)}
+.pi-del{
+  font-size:12px;color:var(--t3);cursor:pointer;
+  padding:4px 7px;border-radius:8px;
+  transition:all .1s;opacity:0;
+}
+.perf-item:hover .pi-del{opacity:1}
+.pi-del:hover{color:var(--rose);background:var(--rose-m)}
+.pi-edit{
+  font-size:13px;color:var(--t3);cursor:pointer;
+  padding:4px 7px;border-radius:8px;
+  transition:all .1s;opacity:0;
+}
+.perf-item:hover .pi-edit{opacity:1}
+.pi-edit:hover{color:var(--violet);background:var(--violet-l)}
+
+.add-perf-btn{
+  display:flex;align-items:center;justify-content:center;
+  gap:8px;padding:14px;
+  background:transparent;
+  border:2px dashed var(--t4);
+  border-radius:16px;
+  color:var(--t3);
+  font-size:13px;font-weight:600;
+  font-family:inherit;cursor:pointer;
+  transition:all .18s;margin-top:4px;
+}
+.add-perf-btn:hover{
+  border-color:var(--violet);color:var(--violet);background:var(--violet-l)
+}
+
+/* 탭 (수행평가/성적) */
+.view-toggle{
+  display:flex;gap:6px;
+  background:var(--violet-l);
+  border-radius:12px;
+  padding:4px;
+  margin-bottom:20px;
+}
+.vt-btn{
+  flex:1;padding:8px;border-radius:9px;
+  border:none;background:transparent;
+  font-size:12.5px;font-weight:700;
+  color:var(--t2);font-family:inherit;cursor:pointer;
+  transition:all .2s;
+}
+.vt-btn.active{
+  background:var(--white);color:var(--violet);
+  box-shadow:var(--shadow-sm);
+}
+
+/* ══ PAGE: 수행평가 상세 ══ */
+#pg-detail{
+  background:var(--bg);
+  overflow:hidden;
+}
+.detail-layout{
+  display:flex;
+  height:100%;
+  overflow:hidden;
+}
+
+/* 왼쪽 섹션 목록 */
+.detail-sidebar{
+  width:240px;
+  flex-shrink:0;
+  background:var(--white);
+  border-right:1px solid var(--violet-m);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.ds-header{
+  padding:20px 16px 12px;
+  border-bottom:1px solid var(--violet-m);
+  flex-shrink:0;
+}
+.ds-perf-name{
+  font-size:14px;font-weight:800;
+  color:var(--t1);margin-bottom:3px;
+  line-height:1.3;
+}
+.ds-meta{font-size:11px;color:var(--t2)}
+.ds-score-row{
+  display:flex;align-items:center;gap:6px;
+  margin-top:8px;
+}
+.ds-score{
+  font-size:18px;font-weight:800;
+  font-family:'JetBrains Mono',monospace;
+  color:var(--violet);
+}
+.ds-score-label{font-size:10.5px;color:var(--t2)}
+.ds-list{flex:1;overflow-y:auto;padding:8px}
+.ds-item{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 12px;border-radius:10px;
+  cursor:pointer;transition:all .15s;
+  margin-bottom:2px;
+}
+.ds-item:hover{background:var(--violet-l)}
+.ds-item.active{
+  background:linear-gradient(135deg,var(--violet-l),var(--violet-m));
+  color:var(--violet);
+}
+.ds-item .di-icon{font-size:13px;flex-shrink:0}
+.ds-item .di-label{
+  font-size:12.5px;font-weight:600;
+  color:var(--t2);flex:1;
+}
+.ds-item.active .di-label{color:var(--violet)}
+.ds-item .di-pill{
+  font-size:9.5px;font-weight:700;
+  padding:1px 6px;border-radius:8px;
+}
+.dp-ok{background:var(--mint-m);color:#059669}
+.dp-no{background:var(--t4);color:var(--t3)}
+.ds-item .di-del{
+  font-size:10px;color:var(--t4);cursor:pointer;
+  padding:2px 5px;border-radius:5px;
+  transition:all .1s;opacity:0;margin-left:2px;
+}
+.ds-item:hover .di-del{opacity:1}
+.di-del:hover{color:var(--rose)!important;background:var(--rose-m)}
+  display:flex;align-items:center;gap:6px;
+  padding:8px 12px;border-radius:10px;
+  border:1.5px dashed var(--t4);
+  background:transparent;color:var(--t3);
+  font-size:12px;font-family:inherit;cursor:pointer;
+  transition:all .15s;width:100%;margin-top:4px;
+}
+.ds-add-btn:hover{border-color:var(--violet);color:var(--violet);background:var(--violet-l)}
+
+/* 오른쪽 에디터 */
+.detail-editor{
+  flex:1;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  background:var(--bg);
+}
+.de-toolbar{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 24px;
+  background:var(--white);
+  border-bottom:1px solid var(--violet-m);
+  flex-shrink:0;
+}
+.de-section-title{
+  font-size:14px;font-weight:800;color:var(--t1);
+  display:flex;align-items:center;gap:8px;
+}
+.de-sp{flex:1}
+.de-btn{
+  padding:6px 14px;border-radius:10px;
+  border:1.5px solid var(--violet-m);
+  background:transparent;color:var(--t2);
+  font-size:12px;font-family:inherit;cursor:pointer;
+  transition:all .15s;font-weight:600;
+}
+.de-btn:hover{border-color:var(--violet);color:var(--violet);background:var(--violet-l)}
+.de-btn.ask{
+  background:linear-gradient(135deg,#8b5cf6,#a78bfa);
+  border-color:transparent;color:#fff;
+}
+.de-btn.ask:hover{opacity:.88}
+
+.de-body{
+  flex:1;overflow-y:auto;
+  padding:24px;
+}
+.editor-area{
+  background:var(--white);
+  border:2px solid var(--violet-m);
+  border-radius:18px;
+  min-height:300px;
+  padding:22px 26px;
+  font-size:13.5px;line-height:1.9;
+  color:var(--t1);
+  outline:none;
+  white-space:pre-wrap;
+  font-family:'Pretendard',sans-serif;
+  transition:border .2s;
+  box-shadow:var(--shadow-sm);
+}
+.editor-area:focus{border-color:var(--violet);box-shadow:var(--shadow)}
+.editor-area:empty::before{
+  content:attr(data-ph);
+  color:var(--t3);font-style:italic;
+}
+
+/* AI 패널 */
+.ai-panel{
+  background:var(--white);
+  border:2px solid var(--violet-m);
+  border-radius:18px;
+  overflow:hidden;
+  margin-top:14px;
+  box-shadow:var(--shadow-sm);
+}
+.ai-header{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 18px;
+  background:linear-gradient(135deg,var(--violet-l),var(--violet-m));
+  border-bottom:1px solid var(--violet-m);
+}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--violet);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.ai-title{font-size:12.5px;font-weight:700;color:var(--violet)}
+.ai-body{padding:14px 18px}
+.ai-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{
+  padding:5px 12px;border-radius:20px;
+  border:1.5px solid var(--violet-m);
+  background:transparent;color:var(--t2);
+  font-size:11.5px;font-family:inherit;cursor:pointer;
+  transition:all .15s;font-weight:600;
+}
+.chip:hover{border-color:var(--violet);color:var(--violet);background:var(--violet-l)}
+.ai-input-row{display:flex;gap:8px}
+.ai-in{
+  flex:1;background:var(--bg);
+  border:1.5px solid var(--violet-m);
+  border-radius:12px;
+  color:var(--t1);padding:9px 14px;
+  font-size:13px;font-family:inherit;
+  outline:none;resize:none;transition:border .15s;
+}
+.ai-in:focus{border-color:var(--violet)}
+.ai-send{
+  padding:9px 18px;border-radius:12px;
+  border:none;
+  background:linear-gradient(135deg,#8b5cf6,#a78bfa);
+  color:#fff;font-size:12.5px;
+  font-family:inherit;cursor:pointer;
+  transition:opacity .15s;font-weight:700;
+  white-space:nowrap;
+}
+.ai-send:hover{opacity:.88}
+.ai-send:disabled{opacity:.4;cursor:not-allowed}
+.ai-result{
+  margin-top:10px;
+  padding:12px 14px;
+  background:var(--violet-l);
+  border-radius:10px;
+  font-size:12.5px;color:var(--t1);
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+.typing{display:flex;gap:4px;align-items:center}
+.typing span{
+  width:6px;height:6px;background:var(--violet);
+  border-radius:50%;animation:bounce .8s infinite;
+}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+
+/* 점수·파일 패널 */
+.meta-panel{
+  display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;
+}
+.meta-box{
+  flex:1;min-width:130px;
+  background:var(--white);
+  border:2px solid var(--violet-m);
+  border-radius:14px;
+  padding:14px 16px;
+  box-shadow:var(--shadow-sm);
+}
+.mb-label{
+  font-size:10px;font-weight:700;
+  color:var(--t3);letter-spacing:1.5px;
+  text-transform:uppercase;margin-bottom:6px;
+}
+.mb-input{
+  font-size:22px;font-weight:800;
+  font-family:'JetBrains Mono',monospace;
+  color:var(--t1);
+  background:transparent;border:none;outline:none;
+  width:100%;
+}
+.mb-input::placeholder{color:var(--t4);font-weight:400;font-size:18px}
+.mb-suffix{font-size:11px;color:var(--t3);margin-top:2px}
+
+.file-zone{
+  flex:1.5;min-width:160px;
+  background:var(--white);
+  border:2px dashed var(--violet-m);
+  border-radius:14px;
+  padding:14px 16px;
+  text-align:center;
+  transition:all .2s;
+  box-shadow:var(--shadow-sm);
+}
+.file-zone:hover,.file-zone.drag{border-color:var(--violet);background:var(--violet-l)}
+.file-zone input{display:none}
+.fz-icon{font-size:20px;margin-bottom:4px}
+.fz-txt{font-size:12px;color:var(--t2);font-weight:600}
+.fz-btns{display:flex;gap:6px;justify-content:center;margin-top:8px}
+.fz-action-btn{
+  padding:5px 11px;border-radius:8px;
+  border:1.5px solid var(--violet-m);
+  background:transparent;color:var(--t2);
+  font-size:11.5px;font-family:inherit;cursor:pointer;
+  transition:all .15s;font-weight:600;
+}
+.fz-action-btn:hover{border-color:var(--violet);color:var(--violet);background:var(--violet-l)}
+
+/* 완성하기 버튼 */
+.complete-btn{
+  display:flex;align-items:center;gap:6px;
+  width:100%;padding:11px;
+  border-radius:12px;
+  border:2px solid var(--mint);
+  background:var(--mint-l);
+  color:#059669;
+  font-size:13px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+  transition:all .2s;margin-top:10px;
+  justify-content:center;
+}
+.complete-btn:hover{background:var(--mint-m);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+
+/* 섹션 이름 편집 */
+.sec-rename-btn{
+  padding:3px 8px;border-radius:6px;
+  border:1px solid var(--violet-m);
+  background:transparent;color:var(--t3);
+  font-size:11px;font-family:inherit;cursor:pointer;
+  transition:all .15s;margin-left:6px;
+}
+.sec-rename-btn:hover{border-color:var(--violet);color:var(--violet)}
+.file-list{margin-top:8px;text-align:left}
+.fi-item{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 8px;background:var(--violet-l);
+  border-radius:7px;font-size:11.5px;color:var(--t2);
+  margin-bottom:3px;
+}
+.fi-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fi-del{cursor:pointer;color:var(--t3);font-size:11px;transition:color .1s}
+.fi-del:hover{color:var(--rose)}
+
+/* 시험 성적 */
+.exam-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:0}
+.exam-item{
+  background:var(--white);
+  border:2px solid var(--violet-m);
+  border-radius:14px;
+  padding:14px 16px;
+  min-width:150px;flex:1;
+  box-shadow:var(--shadow-sm);
+}
+.ei-name-input{
+  font-size:11px;font-weight:700;
+  color:var(--t2);letter-spacing:1px;text-transform:uppercase;
+  background:transparent;border:none;outline:none;
+  width:100%;font-family:inherit;margin-bottom:6px;
+}
+.ei-score{
+  font-size:24px;font-weight:800;
+  font-family:'JetBrains Mono',monospace;
+  color:var(--t1);background:transparent;
+  border:none;outline:none;width:100%;
+}
+.ei-score::placeholder{color:var(--t4);font-size:20px;font-weight:400}
+.ei-rank-row{
+  display:flex;align-items:center;gap:4px;
+  font-size:11.5px;color:var(--t3);margin-top:4px;
+}
+.ei-rank-row input{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;color:var(--t2);
+  background:transparent;border:none;outline:none;
+  width:40px;
+}
+.add-exam-btn{
+  padding:10px 16px;border-radius:12px;
+  border:1.5px dashed var(--t4);
+  background:transparent;color:var(--t3);
+  font-size:12px;font-family:inherit;cursor:pointer;
+  transition:all .15s;font-weight:600;
+}
+.add-exam-btn:hover{border-color:var(--violet);color:var(--violet);background:var(--violet-l)}
+.avg-box{
+  background:linear-gradient(135deg,var(--violet-l),var(--violet-m));
+  border:2px solid var(--violet);
+  border-radius:14px;padding:14px 20px;
+  margin-bottom:14px;display:flex;align-items:center;gap:16px;
+  box-shadow:var(--shadow-sm);
+}
+.avg-num{
+  font-size:32px;font-weight:800;
+  color:var(--violet);
+  font-family:'JetBrains Mono',monospace;
+}
+.avg-sub{font-size:12px;color:var(--t2)}
+
+/* ══ 모달 ══ */
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(91,33,182,.2);
+  backdrop-filter:blur(4px);
+  z-index:1000;
+  display:none;align-items:center;justify-content:center;
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--white);
+  border:2px solid var(--violet-m);
+  border-radius:24px;
+  padding:26px;width:400px;max-width:92vw;
+  box-shadow:var(--shadow-lg);
+  animation:popIn .2s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.modal h3{font-size:16px;font-weight:800;color:var(--t1);margin-bottom:16px}
+.modal input,.modal select,.modal textarea{
+  width:100%;padding:10px 14px;
+  background:var(--bg);
+  border:2px solid var(--violet-m);
+  border-radius:12px;color:var(--t1);
+  font-size:13px;font-family:inherit;outline:none;
+  margin-bottom:10px;transition:border .15s;
+}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--violet)}
+.modal textarea{resize:vertical;min-height:70px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.mb{
+  padding:8px 18px;border-radius:12px;
+  border:2px solid var(--violet-m);
+  background:transparent;color:var(--t2);
+  font-size:13px;font-family:inherit;cursor:pointer;
+  transition:all .15s;font-weight:600;
+}
+.mb:hover{background:var(--violet-l);color:var(--violet);border-color:var(--violet)}
+.mb.p{
+  background:linear-gradient(135deg,#8b5cf6,#a78bfa);
+  border-color:transparent;color:#fff;
+}
+.mb.p:hover{opacity:.88}
+.xbtn{background:none;border:none;color:var(--t3);cursor:pointer;font-size:1.2rem;padding:2px 6px;border-radius:6px;transition:all .15s;line-height:1}
+.xbtn:hover{color:var(--rose);background:var(--rose-m)}
+
+/* 공통 유틸 */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--violet-m);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--lavender)}
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar">
+  <div class="logo">✦ 수행평가 노트</div>
+  <div class="breadcrumb" id="breadcrumb"></div>
+  <div class="sp"></div>
+  <div class="top-btns">
+    <button class="tbtn" onclick="exportAll()">📄 내보내기</button>
+    <button class="tbtn primary" onclick="openM('m-subject')">+ 과목 추가</button>
+  </div>
+</div>
+
+<!-- ── SCREENS ── -->
+<div class="screens">
+
+  <!-- PAGE 1: 과목 선택 -->
+  <div class="screen active" id="pg-subjects">
+    <div class="pg-title">과목 선택</div>
+    <div class="pg-heading">어떤 과목인가요?</div>
+    <div class="pg-sub">과목을 선택해서 수행평가와 성적을 관리하세요</div>
+    <div class="subjects-grid" id="subjects-grid"></div>
+  </div>
+
+  <!-- PAGE 2: 학년 선택 -->
+  <div class="screen" id="pg-grades">
+    <div class="pg-title" id="grade-page-sub">생명과학</div>
+    <div class="pg-heading">몇 학년인가요?</div>
+    <div class="pg-sub">학년을 선택하면 해당 수행평가 목록을 볼 수 있어요</div>
+    <div class="grades-grid" id="grades-grid"></div>
+  </div>
+
+  <!-- PAGE 3: 수행평가 선택 -->
+  <div class="screen" id="pg-perfs">
+    <div style="width:100%;max-width:680px;padding:0 20px">
+      <div class="view-toggle">
+        <button class="vt-btn active" onclick="setViewMode('perf',this)">📝 수행평가</button>
+        <button class="vt-btn" onclick="setViewMode('exam',this)">📊 시험 성적</button>
+      </div>
+      <div id="pg-perfs-body"></div>
+    </div>
+  </div>
+
+  <!-- PAGE 4: 수행평가 상세 -->
+  <div class="screen" id="pg-detail">
+    <div class="detail-layout">
+      <div class="detail-sidebar" id="detail-sidebar"></div>
+      <div class="detail-editor" id="detail-editor"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="m-subject">
+  <div class="modal">
+    <h3>과목 추가</h3>
+    <input id="sub-name" placeholder="과목명 (예: 생명과학)">
+    <select id="sub-icon">
+      <option value="🧬">🧬 생명과학</option>
+      <option value="⚛️">⚛️ 물리학</option>
+      <option value="🧪">🧪 화학</option>
+      <option value="🌍">🌍 지구과학</option>
+      <option value="📐">📐 수학</option>
+      <option value="💻">💻 정보</option>
+      <option value="📚">📚 국어</option>
+      <option value="🌐">🌐 영어</option>
+      <option value="📖">📖 기타</option>
+    </select>
+    <div class="modal-btns">
+      <button class="mb" onclick="closeM('m-subject')">취소</button>
+      <button class="mb p" onclick="doAddSubject()">추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-perf">
+  <div class="modal">
+    <h3>수행평가 추가</h3>
+    <input id="perf-name" placeholder="수행평가 이름">
+    <select id="perf-type">
+      <option>🎤 발표</option>
+      <option>📋 실험 보고서</option>
+      <option>📝 지필 평가</option>
+      <option>📁 포트폴리오</option>
+      <option>🔬 프로젝트</option>
+    </select>
+    <select id="perf-color">
+      <option value="#8b5cf6">보라</option>
+      <option value="#10b981">초록</option>
+      <option value="#f59e0b">노랑</option>
+      <option value="#ef4444">빨강</option>
+      <option value="#3b82f6">파랑</option>
+      <option value="#ec4899">핑크</option>
+    </select>
+    <div class="modal-btns">
+      <button class="mb" onclick="closeM('m-perf')">취소</button>
+      <button class="mb p" onclick="doAddPerf()">추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-sec">
+  <div class="modal">
+    <h3>섹션 추가</h3>
+    <input id="sec-name" placeholder="섹션 이름">
+    <select id="sec-icon">
+      <option value="📋">📋 개요</option>
+      <option value="🌏">🌏 시대 환경</option>
+      <option value="🔬">🔬 가설 / 이론</option>
+      <option value="📊">📊 데이터</option>
+      <option value="🌍">🌍 에피소드</option>
+      <option value="📚">📚 출처</option>
+      <option value="🎤">🎤 발표 대본</option>
+      <option value="💭">💭 고찰</option>
+      <option value="✅">✅ 결론</option>
+      <option value="📌">📌 메모</option>
+    </select>
+    <div class="modal-btns">
+      <button class="mb" onclick="closeM('m-sec')">취소</button>
+      <button class="mb p" onclick="doAddSec()">추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-edit-perf">
+  <div class="modal">
+    <h3>✏️ 수행평가 편집</h3>
+    <label style="font-size:11.5px;color:var(--t2);font-weight:600;margin-bottom:4px;display:block">이름</label>
+    <input id="ep-name" placeholder="수행평가 이름">
+    <label style="font-size:11.5px;color:var(--t2);font-weight:600;margin-bottom:4px;display:block">유형</label>
+    <select id="ep-type">
+      <option>🎤 발표</option>
+      <option>📋 실험 보고서</option>
+      <option>📝 지필 평가</option>
+      <option>📁 포트폴리오</option>
+      <option>🔬 프로젝트</option>
+    </select>
+    <label style="font-size:11.5px;color:var(--t2);font-weight:600;margin-bottom:4px;display:block">색상</label>
+    <select id="ep-color">
+      <option value="#8b5cf6">🟣 보라</option>
+      <option value="#10b981">🟢 초록</option>
+      <option value="#f59e0b">🟡 노랑</option>
+      <option value="#ef4444">🔴 빨강</option>
+      <option value="#3b82f6">🔵 파랑</option>
+      <option value="#ec4899">🩷 핑크</option>
+    </select>
+    <label style="font-size:11.5px;color:var(--t2);font-weight:600;margin-bottom:4px;display:block">과목 이동</label>
+    <select id="ep-subject"></select>
+    <label style="font-size:11.5px;color:var(--t2);font-weight:600;margin-bottom:4px;display:block">학년 이동</label>
+    <select id="ep-grade">
+      <option>1학년</option>
+      <option>2학년</option>
+      <option>3학년</option>
+    </select>
+    <div class="modal-btns">
+      <button class="mb" onclick="closeM('m-edit-perf')">취소</button>
+      <button class="mb p" onclick="doEditPerf()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 섹션 이름 변경 모달 -->
+<div class="overlay" id="m-rename-sec">
+  <div class="modal">
+    <h3>✏️ 섹션 이름 변경</h3>
+    <input id="rename-sec-input" placeholder="새 섹션 이름">
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="chip" onclick="document.getElementById('rename-sec-input').value='개요'">📋 개요</button>
+      <button class="chip" onclick="document.getElementById('rename-sec-input').value='시대 환경'">🌏 시대 환경</button>
+      <button class="chip" onclick="document.getElementById('rename-sec-input').value='멸종 가설'">🔬 멸종 가설</button>
+      <button class="chip" onclick="document.getElementById('rename-sec-input').value='핵심 데이터'">📊 핵심 데이터</button>
+      <button class="chip" onclick="document.getElementById('rename-sec-input').value='에피소드'">🌍 에피소드</button>
+      <button class="chip" onclick="document.getElementById('rename-sec-input').value='출처'">📚 출처</button>
+      <button class="chip" onclick="document.getElementById('rename-sec-input').value='발표 대본'">🎤 발표 대본</button>
+      <button class="chip" onclick="document.getElementById('rename-sec-input').value='결론'">✅ 결론</button>
+    </div>
+    <div class="modal-btns">
+      <button class="mb" onclick="closeM('m-rename-sec')">취소</button>
+      <button class="mb p" onclick="doRenameSec()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 완성하기 모달 - 채팅 형식 -->
+<div class="overlay" id="m-complete">
+  <div class="modal" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <h3>✨ AI 문서 생성</h3>
+      <button class="xbtn" onclick="closeM('m-complete')">✕</button>
+    </div>
+    <p style="font-size:12.5px;color:var(--t2);margin-bottom:14px;line-height:1.6">
+      지금까지 정리한 내용을 바탕으로 원하는 문서를 만들어드려요.<br>어떤 파일이 필요한지 아래에서 선택하거나 직접 입력해보세요.
+    </p>
+
+    <!-- 빠른 선택 칩 -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="chip" onclick="setCompleteMsg('발표 대본을 구어체로 완성해줘. 인트로부터 마무리까지 전부.')">🎤 발표 대본</button>
+      <button class="chip" onclick="setCompleteMsg('A4 1~2장 분량의 발표 보고서를 서론-본론-결론 구조로 완성해줘.')">📄 발표 보고서</button>
+      <button class="chip" onclick="setCompleteMsg('핵심만 추린 요약본을 만들어줘. 한눈에 볼 수 있게.')">📝 핵심 요약</button>
+      <button class="chip" onclick="setCompleteMsg('예상 질문 10개와 모범 답변을 Q: A: 형식으로 만들어줘.')">❓ 예상 Q&A</button>
+      <button class="chip" onclick="setCompleteMsg('발표 PPT 슬라이드 구성안을 슬라이드별로 정리해줘.')">🖼 PPT 구성안</button>
+    </div>
+
+    <!-- 직접 입력 -->
+    <div style="position:relative;margin-bottom:10px">
+      <textarea id="complete-msg" rows="3" style="width:100%;padding:10px 14px;background:var(--bg);border:2px solid var(--violet-m);border-radius:12px;color:var(--t1);font-size:13px;font-family:inherit;outline:none;resize:none;transition:border .15s"
+        placeholder="예: 발표 대본을 3분 분량으로 써줘&#10;예: 결론 부분을 더 강하게 마무리하는 버전으로 만들어줘"
+        onfocus="this.style.borderColor='var(--violet)'"
+        onblur="this.style.borderColor='var(--violet-m)'"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();doComplete()}"></textarea>
+    </div>
+
+    <!-- 결과 영역 -->
+    <div id="complete-result-area" style="display:none;max-height:280px;overflow-y:auto;background:var(--bg);border:1px solid var(--violet-m);border-radius:10px;padding:14px;font-size:13px;line-height:1.8;color:var(--t1);white-space:pre-wrap;margin-bottom:10px"></div>
+
+    <div id="complete-status" style="display:none;padding:10px 14px;background:var(--violet-l);border-radius:10px;font-size:12.5px;color:var(--t2);margin-bottom:10px"></div>
+
+    <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
+      <div id="complete-save-btns" style="display:none;gap:6px;display:none">
+        <button class="mb" onclick="saveCompleteToSec()">📂 섹션에 저장</button>
+        <button class="mb" onclick="downloadCompleteFile()">⬇ 파일로 저장</button>
+      </div>
+      <div style="flex:1"></div>
+      <button class="mb" onclick="closeM('m-complete')">닫기</button>
+      <button class="mb p" id="complete-go-btn" onclick="doComplete()">🤖 생성하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const STORAGE_KEY = 'sciapp_data';
+const GRADES = ['1학년','2학년','3학년'];
+const SUBJECT_STYLES = {
+  '🧬':['sc-bio','#10b981'],
+  '⚛️':['sc-phys','#3b82f6'],
+  '🧪':['sc-chem','#f59e0b'],
+  '🌍':['sc-earth','#22c55e'],
+  '📐':['sc-math','#8b5cf6'],
+  '💻':['sc-default','#6366f1'],
+  '📚':['sc-default','#ec4899'],
+  '🌐':['sc-default','#06b6d4'],
+  '📖':['sc-default','#8b5cf6'],
+  '🎨':['sc-default','#f43f5e'],
+  '🏃':['sc-default','#f59e0b'],
+};
+
+function mkGrades(){const o={};GRADES.forEach(g=>{o[g]={perfs:[]}});return o}
+function mkExams(){const o={};GRADES.forEach(g=>{o[g]={exams:[]}});return o}
+
+const ORDOVICIAN_PERF = {
+  id:'p1',name:'오르도비스기 대멸종 발표',
+  type:'🎤 발표',color:'#22c55e',
+  score:'',maxScore:'100',rank:'',files:[],
+  sections:[
+    {id:'s_ov',icon:'📋',label:'개요',open:true,content:`약 4억 4,500만 년 전 고생대 오르도비스기 말(히르난트절)에 발생한 대규모 멸종.
+
+학술명: LOME (Late Ordovician Mass Extinction)
+• 해양 생물 종의 약 85% 멸종
+• 동물상 속의 49%, 과의 26% 소멸
+• 5대 대멸종(Big Five) 중 첫 번째, 규모 2위
+• 두 차례 펄스(LOME-I, LOME-II)로 진행`},
+    {id:'s_env',icon:'🌏',label:'시대 환경',open:false,content:`【 시기 】
+약 4억 8,540만 년 전 ~ 4억 4,380만 년 전 (약 4,160만 년 지속)
+캄브리아기 다음, 실루리아기 이전. 고생대 6개 기(期) 중 두 번째.
+
+【 기후 】
+초중반 (트레마독절~카티안절): 초온실 기후
+• 대기 중 CO₂ 농도 현재의 약 8~16배 (~4,200ppm)
+• 전 지구 평균 기온 약 16°C 이상
+• 극지 빙하 없음 → 해수면이 현생누대 역사상 가장 높은 수준
+
+말기 (히르난트절): 갑작스러운 빙하기 돌입
+• 곤드와나 대륙이 남극점 도달 → 거대 빙하 형성
+• 해수면 70~100m 급락
+• 대기 CO₂ 급감 (조산운동+육상식물 풍화)
+
+【 대륙 배치 】
+• 곤드와나(초대륙): 남반구, 아프리카·남미·인도·호주·남극 합체
+• 한반도(중한지괴): 적도 부근 따뜻한 얕은 바다 = 조선해(Joseon Sea)
+
+【 해양 환경 】
+• 광대한 얕은 탄산염 대륙붕 → 석회암 퇴적 활발
+• 해양 산소 풍부 → 생물 다양화 최적 환경
+• 강원도 태백 지역 = 당시 열대 바다 밑바닥 (직운산층 화석)
+
+【 생물권 】
+• GOBE(오르도비스기 생물 대폭발): 두 번째 급격한 다양화
+• 삼엽충, 완족류, 필석류, 두족류, 극피동물, 산호, 코노돈트 번성
+• 최초의 척추동물(무악류 어류) 등장
+• "오르도비스기의 에덴동산"`},
+    {id:'s_hypo',icon:'🔬',label:'멸종 가설',open:false,content:`① 빙하기·냉각 가설 (Sheehan, 2001)
+해수면 70~100m 하강 → 천해 서식지 소멸 → LOME-I
+빙하 종료 후 해양 순환 정체 → LOME-II
+
+② 화산활동·온난화·무산소 가설 (Bond & Grasby, 2020)
+LIP 화산 → CO₂ → 온난화 → 무산소 확산
+수은(Hg) 급증이 화산 활동 증거
+
+③ 기후 변화 속도 가설 ★최신 (Zhang et al., 2025)
+LOME-I: 냉각 2.6°C/10만년 → 멸종률 8.4%
+LOME-II: 온난화 12.2°C/10만년 → 멸종률 71.6%
+변화의 속도가 멸종 심각도 결정
+
+④ 감마선 폭발(GRB) 가설 (Melott et al., 2004)
+~6,000광년 초신성 → 오존층 파괴 → UV 급증
+증거 부족, 가설 수준
+
+⑤ 황화 무산소 가설 (Hammarlund et al., 2012)
+H₂S 무산소층 확산으로 1·2차 펄스 모두 설명`},
+    {id:'s_data',icon:'📊',label:'핵심 데이터',open:false,content:`출처: Zhang et al. (2025) / Brenchley et al. (2003) / Sheehan (2001)
+
+구분              LOME-I                  LOME-II
+시작 시점         442.76 Ma              히르난티안 말기
+지속 기간         약 34만 년             약 6만 년
+기온 변화 속도    -2.6°C/10만년 (냉각)  +12.2°C/10만년 (온난화)
+멸종률            8.4%/10만년           71.6%/10만년
+해수면 변화       70~100m 하강          급격한 상승`},
+    {id:'s_ep',icon:'🌍',label:'흥미로운 에피소드',open:false,content:`【 에피소드 1 】 사하라 사막이 당시엔 남극이었다
+현재 사하라는 당시 남극점 근처 빙하 극지.
+강원도 태백은 산호가 사는 열대 바다(조선해)였음.
+
+【 에피소드 2 】 식물이 동물을 대량학살한 최초의 사건
+이끼류 상륙 → 바다에 인(P) 60배 급증 → 녹조 → 무산소
+"식물이 동물을 학살한 최초의 사건"
+
+【 에피소드 3 】 히르난티아 동물군의 비극
+빙하기에 적응해 살아남음 → 빙하기 갑자기 종료 → 전멸
+"살아남았더니 환경이 또 바뀐 비극"
+
+【 에피소드 4 】 우주에서 날아온 살인 광선
+6,000광년 밖 초신성 GRB → 오존층 파괴 → UV 폭증
+실제 학술 논문이지만 증거 부족으로 가설 수준`},
+    {id:'s_ref',icon:'📚',label:'출처',open:false,content:`[1] Brenchley, P.J. et al. (2003). GSA Bulletin, 115(1), 89-104.
+    https://pubs.geoscienceworld.org/gsa/gsabulletin/article-abstract/115/1/89/183914
+
+[2] Sheehan, P.M. (2001). Annual Review of Earth and Planetary Sciences, 29, 331-364.
+    https://www.researchgate.net/publication/257815428
+
+[3] Zhang, Y. et al. (2025). Science Advances, eadv6788.
+    https://nora.nerc.ac.uk/id/eprint/540051/1/sciadv.adv6788.pdf
+
+[4] Bond, D.P.G. & Grasby, S.E. (2020). Geology, 48(8), 777-781.
+    https://pubs.geoscienceworld.org/gsa/geology/article/48/8/777/586486
+
+[5] Melott, A.L. et al. (2004). International Journal of Astrobiology, 3(1), 55-61.
+    https://arxiv.org/pdf/astro-ph/0309415
+
+[6] Hammarlund, E.U. et al. (2012). Earth and Planetary Science Letters, 331-332, 128-139.
+    https://www.sciencedirect.com/science/article/abs/pii/S0012821X12001148`},
+    {id:'s_script',icon:'🎤',label:'발표 대본',open:false,content:''},
+  ]
+};
+
+function defaultData(){
+  const g1earth = mkGrades();
+  g1earth['1학년'].perfs.push(JSON.parse(JSON.stringify(ORDOVICIAN_PERF)));
+  return {subjects:[
+    {id:'s_earth',name:'지구과학',icon:'🌍',grades:g1earth,examScores:mkExams()},
+    {id:'s_bio',  name:'생명과학',icon:'🧬',grades:mkGrades(),examScores:mkExams()},
+    {id:'s_phys', name:'물리학',  icon:'⚛️',grades:mkGrades(),examScores:mkExams()},
+    {id:'s_chem', name:'화학',    icon:'🧪',grades:mkGrades(),examScores:mkExams()},
+    {id:'s_math', name:'수학',    icon:'📐',grades:mkGrades(),examScores:mkExams()},
+    {id:'s_cs',   name:'정보',    icon:'💻',grades:mkGrades(),examScores:mkExams()},
+    {id:'s_kor',  name:'국어',    icon:'📚',grades:mkGrades(),examScores:mkExams()},
+    {id:'s_eng',  name:'영어',    icon:'🌐',grades:mkGrades(),examScores:mkExams()},
+  ]};
+}
+
+// ── 저장 (localStorage만 사용) ──
+let D = defaultData();
+let storageReady = false;
+
+function loadFromStorage(){
+  try {
+    const r = localStorage.getItem(STORAGE_KEY);
+    if(r){
+      const parsed = JSON.parse(r);
+      // 새 과목 병합
+      const existingIds = parsed.subjects.map(s=>s.id);
+      defaultData().subjects.forEach(ds=>{
+        if(!existingIds.includes(ds.id)) parsed.subjects.push(ds);
+      });
+      D = parsed;
+    }
+  } catch(e){
+    console.warn('Storage load failed, using default:', e);
+  }
+  storageReady = true;
+  renderSubjects();
+}
+
+function save(){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(D));
+  } catch(e){
+    console.warn('Save failed:', e);
+  }
+}
+
+function initStorage(){
+  loadFromStorage();
+}
+
+// ── 현재 상태 ──
+let curSubId = null;
+let curGrade = null;
+let curPerfId = null;
+let curSecId  = null;
+let curViewMode = 'perf';
+let addingToSub = null;
+
+const findSub = id => D.subjects.find(s=>s.id===id);
+function findPerf(subId,grade,perfId){return findSub(subId)?.grades[grade]?.perfs.find(p=>p.id===perfId)}
+function curPerf(){return findPerf(curSubId,curGrade,curPerfId)}
+function curSec(){return curPerf()?.sections.find(s=>s.id===curSecId)}
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+function goPage(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('active');
+  updateBreadcrumb();
+}
+
+function updateBreadcrumb(){
+  const bc=document.getElementById('breadcrumb');
+  const parts=[];
+  if(curSubId){const s=findSub(curSubId);parts.push({label:s.icon+' '+s.name,action:()=>backToSubjects()})}
+  if(curGrade)parts.push({label:curGrade,action:()=>backToGrades()});
+  if(curPerfId){const p=curPerf();parts.push({label:p.name,action:()=>backToPerfs()})}
+  if(curSecId){const s=curSec();parts.push({label:s.label,action:null})}
+
+  bc.innerHTML='';
+  parts.forEach((p,i)=>{
+    if(i>0){const sep=document.createElement('span');sep.className='bc-sep';sep.textContent='›';bc.appendChild(sep)}
+    const span=document.createElement('span');
+    span.className='bc-item'+(i===parts.length-1?' cur':'');
+    span.textContent=p.label;
+    if(p.action)span.onclick=p.action;
+    bc.appendChild(span);
+  });
+}
+
+function backToSubjects(){curSubId=null;curGrade=null;curPerfId=null;curSecId=null;renderSubjects();goPage('subjects')}
+function backToGrades(){curGrade=null;curPerfId=null;curSecId=null;renderGrades();goPage('grades')}
+function backToPerfs(){curPerfId=null;curSecId=null;renderPerfs();goPage('perfs')}
+
+// ══════════════════════════════════════════
+//  PAGE 1: 과목
+// ══════════════════════════════════════════
+function renderSubjects(){
+  const grid=document.getElementById('subjects-grid');
+  grid.innerHTML='';
+  D.subjects.forEach(sub=>{
+    const [cls,color]=SUBJECT_STYLES[sub.icon]||['sc-default','#8b5cf6'];
+    const total=GRADES.reduce((a,g)=>a+(sub.grades[g]?.perfs.length||0),0);
+    const card=document.createElement('div');
+    card.className=`subject-card ${cls}`;
+    card.innerHTML=`<div class="sc-icon">${sub.icon}</div><div class="sc-name">${sub.name}</div><div class="sc-count">수행평가 ${total}개</div>`;
+    card.onclick=()=>{curSubId=sub.id;renderGrades();goPage('grades')};
+    grid.appendChild(card);
+  });
+  const add=document.createElement('button');
+  add.className='add-subject-card';
+  add.innerHTML=`<div class="plus">＋</div><span>과목 추가</span>`;
+  add.onclick=()=>openM('m-subject');
+  grid.appendChild(add);
+}
+
+// ══════════════════════════════════════════
+//  PAGE 2: 학년
+// ══════════════════════════════════════════
+function renderGrades(){
+  const sub=findSub(curSubId);
+  document.getElementById('grade-page-sub').textContent=sub.icon+' '+sub.name;
+  const grid=document.getElementById('grades-grid');
+  grid.innerHTML='';
+  GRADES.forEach(g=>{
+    const cnt=sub.grades[g]?.perfs.length||0;
+    const card=document.createElement('div');
+    card.className='grade-card';
+    card.innerHTML=`<div class="gc-num">${g[0]}</div><div class="gc-label">${g}</div><div class="gc-count">수행평가 ${cnt}개</div>`;
+    card.onclick=()=>{curGrade=g;curViewMode='perf';renderPerfs();goPage('perfs')};
+    grid.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════
+//  PAGE 3: 수행평가 목록
+// ══════════════════════════════════════════
+function setViewMode(mode,el){
+  curViewMode=mode;
+  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderPerfs();
+}
+
+function renderPerfs(){
+  const body=document.getElementById('pg-perfs-body');
+  body.innerHTML='';
+  if(curViewMode==='perf') renderPerfList(body);
+  else renderExamList(body);
+  updateBreadcrumb();
+}
+
+function renderPerfList(body){
+  const sub=findSub(curSubId);
+  const perfs=sub.grades[curGrade]?.perfs||[];
+
+  const hdr=document.createElement('div');
+  hdr.className='perfs-header';
+  hdr.innerHTML=`<h2>${sub.icon} ${sub.name} · ${curGrade} 수행평가</h2>`;
+  const addBtn=document.createElement('button');
+  addBtn.className='tbtn primary';addBtn.textContent='+ 추가';
+  addBtn.onclick=()=>{addingToSub=curSubId;openM('m-perf')};
+  hdr.appendChild(addBtn);
+  body.appendChild(hdr);
+
+  if(!perfs.length){
+    body.innerHTML+=`<div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">수행평가가 없어요.<br><button class="add-perf-btn" style="margin:14px auto 0;display:flex" onclick="addingToSub=curSubId;openM('m-perf')">+ 수행평가 추가</button></div>`;
+    return;
+  }
+
+  const list=document.createElement('div');list.className='perf-list';
+  perfs.forEach(p=>{
+    const pct=p.score&&p.maxScore?parseInt(p.score)/parseInt(p.maxScore):null;
+    const scoreColor=pct===null?'var(--t3)':pct>=.8?'#059669':pct>=.6?'#d97706':'#dc2626';
+    const scoreBg=pct===null?'var(--t4)':pct>=.8?'var(--mint-m)':pct>=.6?'var(--lemon)':'var(--rose-m)';
+    const scoreText=p.score?`${p.score}/${p.maxScore}`:'미입력';
+    const item=document.createElement('div');
+    item.className='perf-item';
+    item.innerHTML=`
+      <span class="pi-dot" style="background:${p.color}"></span>
+      <div class="pi-info">
+        <div class="pi-name">${p.name}</div>
+        <div class="pi-meta">${p.type} · ${curGrade}</div>
+      </div>
+      <span class="pi-score" style="color:${scoreColor};background:${scoreBg}">${scoreText}</span>
+      <span class="pi-edit" onclick="openEditPerf('${p.id}',event)" title="편집">✎</span>
+      <span class="pi-del" onclick="delPerf('${p.id}',event)">✕</span>
+      <span class="pi-arr">→</span>`;
+    item.onclick=(e)=>{if(e.target.classList.contains('pi-del'))return;openPerf(p.id)};
+    list.appendChild(item);
+  });
+
+  const addItem=document.createElement('button');
+  addItem.className='add-perf-btn';
+  addItem.innerHTML='＋ 수행평가 추가';
+  addItem.onclick=()=>{addingToSub=curSubId;openM('m-perf')};
+  list.appendChild(addItem);
+  body.appendChild(list);
+}
+
+function renderExamList(body){
+  const sub=findSub(curSubId);
+  const examData=sub.examScores?.[curGrade]||{exams:[]};
+
+  // 평균
+  const scored=examData.exams.filter(e=>e.score);
+  if(scored.length){
+    const avg=(scored.reduce((a,e)=>a+parseFloat(e.score||0),0)/scored.length).toFixed(1);
+    const avgBox=document.createElement('div');
+    avgBox.className='avg-box';
+    avgBox.innerHTML=`<div class="avg-num">${avg}점</div><div class="avg-sub">${scored.length}개 시험 평균</div>`;
+    body.appendChild(avgBox);
+  }
+
+  const grid=document.createElement('div');grid.className='exam-grid';
+  examData.exams.forEach((ex,i)=>{
+    const item=document.createElement('div');item.className='exam-item';
+    item.innerHTML=`
+      <input class="ei-name-input" value="${ex.name}" placeholder="시험명"
+        onchange="updateExam('${sub.id}','${curGrade}',${i},'name',this.value)">
+      <input class="ei-score" type="number" placeholder="점수" value="${ex.score||''}"
+        oninput="updateExam('${sub.id}','${curGrade}',${i},'score',this.value)">
+      <div class="ei-rank-row">등수: 
+        <input value="${ex.rank||''}" placeholder="1" onchange="updateExam('${sub.id}','${curGrade}',${i},'rank',this.value)">
+        / <input value="${ex.total||''}" placeholder="30" onchange="updateExam('${sub.id}','${curGrade}',${i},'total',this.value)">
+      </div>`;
+    grid.appendChild(item);
+  });
+  body.appendChild(grid);
+
+  const addRow=document.createElement('div');
+  addRow.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:10px';
+  ['중간고사','기말고사','모의고사','수행평가'].forEach(name=>{
+    const btn=document.createElement('button');
+    btn.className='add-exam-btn';btn.textContent='+ '+name;
+    btn.onclick=()=>addExam(sub.id,curGrade,name);
+    addRow.appendChild(btn);
+  });
+  const custom=document.createElement('button');
+  custom.className='add-exam-btn';custom.textContent='+ 직접 입력';
+  custom.onclick=()=>addExam(sub.id,curGrade,'');
+  addRow.appendChild(custom);
+  body.appendChild(addRow);
+}
+
+// ══════════════════════════════════════════
+//  PAGE 4: 수행평가 상세
+// ══════════════════════════════════════════
+function openPerf(perfId){
+  curPerfId=perfId;
+  const p=curPerf();
+  curSecId=p.sections[0]?.id||null;
+  renderDetail();
+  goPage('detail');
+}
+
+function renderDetail(){
+  renderDetailSidebar();
+  renderDetailEditor();
+  updateBreadcrumb();
+}
+
+function renderDetailSidebar(){
+  const sb=document.getElementById('detail-sidebar');
+  const p=curPerf();
+  const sub=findSub(curSubId);
+  const pct=p.score&&p.maxScore?(parseInt(p.score)/parseInt(p.maxScore)*100).toFixed(0):null;
+  const fileId='fi-sb-'+p.id;
+
+  let html=`
+    <div class="ds-header">
+      <div class="ds-perf-name">${p.name}</div>
+      <div class="ds-meta">${sub.icon} ${sub.name} · ${curGrade} · ${p.type}</div>
+      
+      <!-- 점수 인라인 입력 -->
+      <div style="display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:60px">
+          <div style="font-size:9.5px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">점수</div>
+          <div style="display:flex;align-items:center;gap:3px">
+            <input type="number" value="${p.score||''}" placeholder="–"
+              style="width:44px;font-size:15px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--violet);background:var(--violet-l);border:1px solid var(--violet-m);border-radius:7px;padding:4px 6px;outline:none"
+              oninput="updateMeta('score',this.value)">
+            <span style="font-size:11px;color:var(--t3)">/ </span>
+            <input type="number" value="${p.maxScore||100}" 
+              style="width:38px;font-size:11px;color:var(--t2);background:transparent;border:none;outline:none;font-family:inherit"
+              oninput="updateMeta('maxScore',this.value)">
+          </div>
+        </div>
+        <div style="flex:1;min-width:60px">
+          <div style="font-size:9.5px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">등수</div>
+          <input type="text" value="${p.rank||''}" placeholder="–"
+            style="width:100%;font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--t1);background:var(--bg);border:1px solid var(--violet-m);border-radius:7px;padding:4px 7px;outline:none"
+            oninput="updateMeta('rank',this.value)">
+        </div>
+      </div>
+
+      <!-- 파일 업로드 -->
+      <div style="margin-top:10px">
+        <div style="font-size:9.5px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">완성 파일</div>
+        <div style="display:flex;gap:5px;margin-bottom:5px">
+          <button onclick="document.getElementById('${fileId}').click()" style="flex:1;padding:5px;border-radius:7px;border:1px solid var(--violet-m);background:transparent;color:var(--t2);font-size:11px;font-family:inherit;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--violet)';this.style.color='var(--violet)'" onmouseout="this.style.borderColor='var(--violet-m)';this.style.color='var(--t2)'">⬆ 업로드</button>
+          <button onclick="document.getElementById('${fileId}-open').click()" style="flex:1;padding:5px;border-radius:7px;border:1px solid var(--violet-m);background:transparent;color:var(--t2);font-size:11px;font-family:inherit;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--violet)';this.style.color='var(--violet)'" onmouseout="this.style.borderColor='var(--violet-m)';this.style.color='var(--t2)'">📂 열기</button>
+        </div>
+        <input type="file" id="${fileId}" multiple accept=".pdf,.hwp,.hwpx,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.png,.jpg,.jpeg" style="display:none" onchange="handleFiles(event)">
+        <input type="file" id="${fileId}-open" style="display:none" accept=".md,.txt" onchange="handleOpenFile(event)">
+        <div id="sb-file-list">${renderFiles(p)}</div>
+      </div>
+    </div>
+    <div class="ds-list" id="ds-list">`;
+
+  p.sections.forEach(sec=>{
+    const active=sec.id===curSecId;
+    const hasCont=sec.content?.trim();
+    html+=`<div class="ds-item${active?' active':''}" onclick="switchSec('${sec.id}')">
+      <span class="di-icon">${sec.icon}</span>
+      <span class="di-label">${sec.label}</span>
+      <span class="di-pill ${hasCont?'dp-ok':'dp-no'}">${hasCont?'✓':'비어있음'}</span>
+      <span class="di-del" onclick="delSec('${sec.id}',event)" title="섹션 삭제">✕</span>
+    </div>`;
+  });
+
+  html+=`<button class="ds-add-btn" onclick="openM('m-sec')">＋ 섹션 추가</button></div>`;
+  sb.innerHTML=html;
+}
+
+function delSec(secId, e){
+  e.stopPropagation();
+  const p = curPerf(); if(!p) return;
+  if(p.sections.length <= 1){ alert('마지막 섹션은 삭제할 수 없어요.'); return; }
+  if(!confirm('이 섹션을 삭제할까요?')) return;
+  p.sections = p.sections.filter(s => s.id !== secId);
+  if(curSecId === secId) curSecId = p.sections[0]?.id || null;
+  save();
+  renderDetail();
+}
+
+function switchSec(secId){
+  curSecId=secId;
+  renderDetailSidebar();
+  renderDetailEditor();
+  updateBreadcrumb();
+}
+
+function renderDetailEditor(){
+  const ed=document.getElementById('detail-editor');
+  const p=curPerf();
+  const sec=curSec();
+  if(!sec){ed.innerHTML='';return}
+
+  ed.innerHTML=`
+    <div class="de-toolbar">
+      <div class="de-section-title"><span>${sec.icon}</span> ${sec.label}
+        <button class="sec-rename-btn" onclick="openRenameSec('${sec.id}')">이름 변경</button>
+      </div>
+      <div class="de-sp"></div>
+      <button class="de-btn" onclick="openEditPerfFromDetail()">✎ 편집</button>
+      <button class="de-btn" style="background:linear-gradient(135deg,#10b981,#059669);border-color:transparent;color:#fff" onclick="openCompleteModal()">✅ 완성하기</button>
+      <button class="de-btn ask" onclick="toggleAIPanel()">🤖 AI에게 요청</button>
+    </div>
+    <div class="de-body">
+      <div class="editor-area" contenteditable="true" spellcheck="false"
+        data-ph="내용을 입력하거나 AI에게 요청하세요..."
+        oninput="onEdit(this)"
+        id="main-editor"
+      >${esc(sec.content||'')}</div>
+
+      <div id="ai-panel-wrap"></div>
+    </div>`;
+}
+
+function renderMetaHtml(p){
+  const fileId='fi-'+p.id;
+  return `
+    <div class="meta-panel">
+      <div class="meta-box">
+        <div class="mb-label">획득 점수</div>
+        <input class="mb-input" type="number" placeholder="85" value="${p.score||''}"
+          oninput="updateMeta('score',this.value)">
+        <div class="mb-suffix">점 / ${p.maxScore}점 만점</div>
+      </div>
+      <div class="meta-box">
+        <div class="mb-label">만점</div>
+        <input class="mb-input" type="number" placeholder="100" value="${p.maxScore||100}"
+          oninput="updateMeta('maxScore',this.value)">
+      </div>
+      <div class="meta-box">
+        <div class="mb-label">등수 / 석차</div>
+        <input class="mb-input" type="text" placeholder="3 / 30" value="${p.rank||''}"
+          oninput="updateMeta('rank',this.value)">
+      </div>
+      <div class="file-zone" onclick="document.getElementById('${fileId}').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleDrop(event)">
+        <input type="file" id="${fileId}" multiple accept=".pdf,.hwp,.hwpx,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.png,.jpg,.jpeg" style="display:none"
+          onchange="handleFiles(event)">
+        <input type="file" id="${fileId}-open" style="display:none" accept=".md,.txt"
+          onchange="handleOpenFile(event)">
+        <div class="fz-icon">📎</div>
+        <div class="fz-txt">완성 파일</div>
+        <div class="fz-btns">
+          <button onclick="event.stopPropagation();document.getElementById('${fileId}').click()" class="fz-action-btn">⬆ 업로드</button>
+          <button onclick="event.stopPropagation();document.getElementById('${fileId}-open').click()" class="fz-action-btn">📂 열기</button>
+        </div>
+        <div class="file-list" id="file-list-wrap">${renderFiles(p)}</div>
+      </div>
+    </div>`;
+}
+
+function renderFiles(p){
+  return (p.files||[]).map((f,i)=>
+    `<div class="fi-item"><span>📄</span><span class="fi-name">${f.name}</span><span class="fi-del" onclick="delFile(${i},event)">✕</span></div>`
+  ).join('');
+}
+
+function onEdit(el){
+  const sec=curSec();if(!sec)return;
+  sec.content=el.innerText;
+  save();
+  // 사이드바 pill 업데이트
+  const dsItem=document.querySelector(`.ds-item[onclick="switchSec('${sec.id}')"] .di-pill`);
+  if(dsItem){dsItem.className='di-pill '+(sec.content.trim()?'dp-ok':'dp-no');dsItem.textContent=sec.content.trim()?'✓':'비어있음'}
+}
+
+function updateMeta(field,val){
+  const p=curPerf();if(!p)return;
+  p[field]=val;save();
+}
+
+// ── AI 패널 ──
+let aiPanelOpen=false;
+function toggleAIPanel(){
+  aiPanelOpen=!aiPanelOpen;
+  const wrap=document.getElementById('ai-panel-wrap');
+  if(!wrap)return;
+  if(!aiPanelOpen){wrap.innerHTML='';return}
+  const p=curPerf();
+  const sec=curSec();
+  wrap.innerHTML=`
+    <div class="ai-panel">
+      <div class="ai-header">
+        <div class="ai-dot"></div>
+        <div class="ai-title">Claude AI — ${sec.label} 자동 정리</div>
+      </div>
+      <div class="ai-body">
+        <div class="ai-chips">
+          <button class="chip" onclick="askAI('자세하게 정리해줘')">자세히 정리</button>
+          <button class="chip" onclick="askAI('더 구체적인 예시를 추가해줘')">예시 추가</button>
+          <button class="chip" onclick="askAI('발표용으로 다듬어줘')">발표용으로</button>
+          <button class="chip" onclick="askAI('핵심만 요약해줘')">핵심 요약</button>
+          <button class="chip" onclick="askAI('출처 형식으로 정리해줘')">출처 정리</button>
+        </div>
+        <div class="ai-input-row">
+          <textarea class="ai-in" id="ai-in" rows="2"
+            placeholder="예: 시대 환경에서 기후 부분 더 자세히 써줘..."
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askAI(null)}"></textarea>
+          <button class="ai-send" id="ai-send" onclick="askAI(null)">전송</button>
+        </div>
+        <div id="ai-result"></div>
+      </div>
+    </div>`;
+}
+
+async function askAI(preset){
+  const inp=document.getElementById('ai-in');
+  const sendBtn=document.getElementById('ai-send');
+  const resultEl=document.getElementById('ai-result');
+  if(!resultEl)return;
+
+  const msg=preset||(inp?.value?.trim());
+  if(!msg)return;
+  if(inp)inp.value='';
+  if(sendBtn)sendBtn.disabled=true;
+
+  const p=curPerf();const sec=curSec();const sub=findSub(curSubId);
+  const ctx=p.sections.filter(s=>s.content?.trim()).map(s=>`[${s.label}]\n${s.content.trim().slice(0,200)}`).join('\n\n');
+
+  resultEl.innerHTML=`<div class="ai-result"><div class="typing"><span></span><span></span><span></span></div></div>`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:`너는 수행평가 자료를 정리해주는 AI야.
+수행평가: "${p.name}" (${p.type}), 과목: ${sub.icon}${sub.name}
+현재 편집 중인 섹션: [${sec.label}]
+기존 내용: ${sec.content?.slice(0,300)||'없음'}
+전체 맥락: ${ctx.slice(0,600)||'없음'}
+
+요청에 맞게 [${sec.label}] 섹션 내용을 한국어로 깔끔하게 정리해줘.
+마크다운 헤더(#) 없이, 줄바꿈과 bullet(•, -, ①②③)만 사용해.
+내용만 바로 출력해, 설명이나 안내 없이.`,
+        messages:[{role:'user',content:msg}]
+      })
+    });
+    const data=await resp.json();
+    const text=data.content?.map(c=>c.text||'').join('')||'응답을 받지 못했습니다.';
+
+    // 섹션에 자동 삽입
+    sec.content=text.trim();
+    save();
+
+    // 에디터 업데이트
+    const ed=document.getElementById('main-editor');
+    if(ed)ed.innerText=sec.content;
+
+    // 사이드바 pill 업데이트
+    renderDetailSidebar();
+
+    resultEl.innerHTML=`<div class="ai-result">✅ <strong>[${sec.label}]</strong> 섹션에 정리했어요!</div>`;
+  }catch(e){
+    resultEl.innerHTML=`<div class="ai-result" style="color:#dc2626">오류: ${e.message}</div>`;
+  }
+  if(sendBtn)sendBtn.disabled=false;
+}
+
+// ══════════════════════════════════════════
+//  CRUD
+// ══════════════════════════════════════════
+function doAddSubject(){
+  const name=document.getElementById('sub-name').value.trim();
+  const icon=document.getElementById('sub-icon').value;
+  if(!name)return;
+  const grades=mkGrades(),examScores=mkExams();
+  D.subjects.push({id:'s'+Date.now(),name,icon,grades,examScores});
+  save();closeM('m-subject');renderSubjects();
+}
+
+function doAddPerf(){
+  const name=document.getElementById('perf-name').value.trim();
+  const type=document.getElementById('perf-type').value;
+  const color=document.getElementById('perf-color').value;
+  if(!name)return;
+  const sub=findSub(addingToSub||curSubId);if(!sub)return;
+  if(!sub.grades[curGrade])sub.grades[curGrade]={perfs:[]};
+  const newId='p'+Date.now();
+  sub.grades[curGrade].perfs.push({
+    id:newId,name,type,color,
+    score:'',maxScore:'100',rank:'',files:[],
+    sections:[{id:'s_ov_'+newId,icon:'📋',label:'개요',open:true,content:''}]
+  });
+  save();closeM('m-perf');renderPerfs();
+}
+
+function delPerf(perfId,e){
+  e.stopPropagation();
+  if(!confirm('삭제할까요?'))return;
+  const sub=findSub(curSubId);
+  sub.grades[curGrade].perfs=sub.grades[curGrade].perfs.filter(p=>p.id!==perfId);
+  save();renderPerfs();
+}
+
+function doAddSec(){
+  const label=document.getElementById('sec-name').value.trim();
+  const icon=document.getElementById('sec-icon').value;
+  if(!label)return;
+  const p=curPerf();if(!p)return;
+  const newSec={id:'s_'+Date.now(),icon,label,open:true,content:''};
+  p.sections.push(newSec);
+  curSecId=newSec.id;
+  save();closeM('m-sec');renderDetail();
+}
+
+// ── 시험 성적 ──
+function addExam(subId,grade,name){
+  const sub=findSub(subId);if(!sub)return;
+  if(!sub.examScores)sub.examScores=mkExams();
+  if(!sub.examScores[grade])sub.examScores[grade]={exams:[]};
+  sub.examScores[grade].exams.push({name:name||'시험',score:'',rank:'',total:''});
+  save();renderPerfs();
+}
+
+function updateExam(subId,grade,idx,field,val){
+  const sub=findSub(subId);
+  if(!sub?.examScores?.[grade]?.exams?.[idx])return;
+  sub.examScores[grade].exams[idx][field]=val;
+  save();
+}
+
+// ── 파일 ──
+function handleFiles(e){
+  const p=curPerf();if(!p)return;
+  if(!p.files)p.files=[];
+  Array.from(e.target.files).forEach(f=>p.files.push({name:f.name,size:f.size}));
+  save();
+  const fl=document.getElementById('file-list-wrap');
+  if(fl)fl.innerHTML=renderFiles(p);
+}
+
+function handleDrop(e){
+  e.preventDefault();e.currentTarget.classList.remove('drag');
+  const p=curPerf();if(!p)return;
+  if(!p.files)p.files=[];
+  Array.from(e.dataTransfer.files).forEach(f=>p.files.push({name:f.name,size:f.size}));
+  save();
+  const fl=document.getElementById('file-list-wrap');
+  if(fl)fl.innerHTML=renderFiles(p);
+}
+
+function delFile(idx,e){
+  e.stopPropagation();
+  const p=curPerf();if(!p)return;
+  p.files.splice(idx,1);save();
+  const fl=document.getElementById('file-list-wrap');
+  if(fl)fl.innerHTML=renderFiles(p);
+}
+
+function openEditPerfFromDetail(){
+  // detail 페이지에서 편집 모달 열기
+  editingPerfId   = curPerfId;
+  editingFromSubId = curSubId;
+  editingFromGrade = curGrade;
+  const p = curPerf(); if(!p) return;
+  document.getElementById('ep-name').value = p.name;
+  const typeEl=document.getElementById('ep-type');
+  Array.from(typeEl.options).forEach((o,i)=>{if(o.value===p.type||o.text===p.type)typeEl.selectedIndex=i});
+  const colorEl=document.getElementById('ep-color');
+  Array.from(colorEl.options).forEach((o,i)=>{if(o.value===p.color)colorEl.selectedIndex=i});
+  const subEl=document.getElementById('ep-subject');
+  subEl.innerHTML=D.subjects.map(s=>`<option value="${s.id}" ${s.id===curSubId?'selected':''}>${s.icon} ${s.name}</option>`).join('');
+  const gradeEl=document.getElementById('ep-grade');
+  Array.from(gradeEl.options).forEach((o,i)=>{if(o.value===curGrade||o.text===curGrade)gradeEl.selectedIndex=i});
+  openM('m-edit-perf');
+}
+
+// ── 수행평가 편집 ──
+let editingPerfId = null;
+let editingFromSubId = null;
+let editingFromGrade = null;
+
+function openEditPerf(perfId, e){
+  e.stopPropagation();
+  editingPerfId = perfId;
+  editingFromSubId = curSubId;
+  editingFromGrade = curGrade;
+
+  const p = findPerf(curSubId, curGrade, perfId);
+  if(!p) return;
+
+  // 폼 채우기
+  document.getElementById('ep-name').value = p.name;
+  const typeEl = document.getElementById('ep-type');
+  Array.from(typeEl.options).forEach((o,i)=>{ if(o.value===p.type||o.text===p.type) typeEl.selectedIndex=i; });
+  const colorEl = document.getElementById('ep-color');
+  Array.from(colorEl.options).forEach((o,i)=>{ if(o.value===p.color) colorEl.selectedIndex=i; });
+
+  // 과목 목록 채우기
+  const subEl = document.getElementById('ep-subject');
+  subEl.innerHTML = D.subjects.map(s =>
+    `<option value="${s.id}" ${s.id===curSubId?'selected':''}>${s.icon} ${s.name}</option>`
+  ).join('');
+
+  // 학년 선택
+  const gradeEl = document.getElementById('ep-grade');
+  Array.from(gradeEl.options).forEach((o,i)=>{ if(o.value===curGrade||o.text===curGrade) gradeEl.selectedIndex=i; });
+
+  openM('m-edit-perf');
+}
+
+function doEditPerf(){
+  if(!editingPerfId) return;
+  const name  = document.getElementById('ep-name').value.trim();
+  const type  = document.getElementById('ep-type').value;
+  const color = document.getElementById('ep-color').value;
+  const toSubId = document.getElementById('ep-subject').value;
+  const toGrade = document.getElementById('ep-grade').value;
+  if(!name){ alert('이름을 입력하세요.'); return; }
+
+  const fromSub = findSub(editingFromSubId);
+  const perfIdx = fromSub.grades[editingFromGrade].perfs.findIndex(p=>p.id===editingPerfId);
+  if(perfIdx<0) return;
+
+  const perf = fromSub.grades[editingFromGrade].perfs[perfIdx];
+  perf.name  = name;
+  perf.type  = type;
+  perf.color = color;
+
+  // 과목/학년 이동
+  const moved = toSubId !== editingFromSubId || toGrade !== editingFromGrade;
+  if(moved){
+    fromSub.grades[editingFromGrade].perfs.splice(perfIdx, 1);
+    const toSub = findSub(toSubId);
+    if(!toSub.grades[toGrade]) toSub.grades[toGrade] = {perfs:[]};
+    toSub.grades[toGrade].perfs.push(perf);
+    // 현재 보기 위치 업데이트
+    curSubId  = toSubId;
+    curGrade  = toGrade;
+  }
+
+  save();
+  closeM('m-edit-perf');
+
+  // 이동했으면 해당 과목/학년 페이지로
+  if(moved){
+    renderSubjects();
+    renderGrades();
+    renderPerfs();
+    goPage('perfs');
+  } else {
+    renderPerfs();
+  }
+}
+
+// ── 파일 열기 (텍스트 파일 읽어서 섹션에 넣기) ──
+function handleOpenFile(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const content = ev.target.result;
+    const sec = curSec(); if(!sec) return;
+    // 기존 내용에 추가할지 덮어쓸지 선택
+    const action = confirm(`"${file.name}" 파일을 열겠습니다.\n\n확인: 현재 섹션에 내용 추가\n취소: 내용 덮어쓰기`);
+    sec.content = action ? (sec.content ? sec.content + '\n\n---\n\n' + content : content) : content;
+    save();
+    const ed = document.getElementById('main-editor');
+    if(ed) ed.innerText = sec.content;
+    renderDetailSidebar();
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+}
+
+// ── 섹션 이름 변경 ──
+let renamingSecId = null;
+function openRenameSec(secId){
+  renamingSecId = secId;
+  const sec = curPerf()?.sections.find(s=>s.id===secId);
+  if(!sec) return;
+  document.getElementById('rename-sec-input').value = sec.label;
+  openM('m-rename-sec');
+}
+function doRenameSec(){
+  const newLabel = document.getElementById('rename-sec-input').value.trim();
+  if(!newLabel) return;
+  const sec = curPerf()?.sections.find(s=>s.id===renamingSecId);
+  if(!sec) return;
+  // 아이콘도 자동 매핑
+  const iconMap = {'개요':'📋','시대 환경':'🌏','멸종 가설':'🔬','핵심 데이터':'📊','에피소드':'🌍','출처':'📚','발표 대본':'🎤','결론':'✅','고찰':'💭','메모':'📌'};
+  sec.icon = iconMap[newLabel] || sec.icon;
+  sec.label = newLabel;
+  save();
+  closeM('m-rename-sec');
+  renderDetail();
+}
+
+// ── 완성하기 (AI 문서 생성 — 채팅 형식) ──
+let lastCompleteText = '';
+let lastCompleteLabel = '';
+
+function openCompleteModal(){
+  document.getElementById('complete-status').style.display='none';
+  document.getElementById('complete-result-area').style.display='none';
+  document.getElementById('complete-save-btns').style.display='none';
+  document.getElementById('complete-go-btn').disabled=false;
+  document.getElementById('complete-go-btn').textContent='🤖 생성하기';
+  document.getElementById('complete-msg').value='';
+  lastCompleteText='';
+  openM('m-complete');
+  setTimeout(()=>document.getElementById('complete-msg').focus(),200);
+}
+
+function setCompleteMsg(msg){
+  document.getElementById('complete-msg').value = msg;
+  document.getElementById('complete-msg').focus();
+}
+
+async function doComplete(){
+  const msg = document.getElementById('complete-msg').value.trim();
+  const statusEl = document.getElementById('complete-status');
+  const resultEl = document.getElementById('complete-result-area');
+  const goBtn = document.getElementById('complete-go-btn');
+  const saveBtns = document.getElementById('complete-save-btns');
+  const p = curPerf(); const sub = findSub(curSubId);
+  if(!p) return;
+  if(!msg){ document.getElementById('complete-msg').focus(); return; }
+
+  goBtn.disabled = true;
+  goBtn.textContent = '생성 중...';
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  resultEl.style.display = 'none';
+  saveBtns.style.display = 'none';
+
+  // 내용 있는 섹션만 수집 (비어있어도 OK)
+  const allContent = p.sections
+    .filter(s => s.content?.trim())
+    .map(s => `[${s.label}]\n${s.content.trim()}`)
+    .join('\n\n');
+
+  // 라벨 자동 추출
+  const labelMap = [
+    ['대본','🎤','발표 대본'],['스크립트','🎤','발표 대본'],
+    ['보고서','📄','완성 보고서'],['리포트','📄','완성 보고서'],
+    ['요약','📝','핵심 요약'],['정리','📝','핵심 요약'],
+    ['질문','❓','예상 Q&A'],['Q&A','❓','예상 Q&A'],
+    ['PPT','🖼','PPT 구성안'],['슬라이드','🖼','PPT 구성안'],
+  ];
+  const matched = labelMap.find(([kw])=>msg.includes(kw));
+  lastCompleteLabel = matched ? matched[2] : '생성 문서';
+  const labelIcon = matched ? matched[1] : '📄';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: `너는 수행평가 문서를 완성해주는 전문가야.
+과목: ${sub.icon}${sub.name}, 수행평가: "${p.name}"
+아래는 지금까지 정리된 내용이야:
+
+${allContent || '(내용 없음 — 창의적으로 작성해줘)'}
+
+한국어로 작성하고, 마크다운 헤더(#, ##) 없이 깔끔하게 작성해. 내용만 바로 시작해.`,
+        messages: [{role:'user', content: msg}]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content?.map(c=>c.text||'').join('') || '생성 실패';
+    lastCompleteText = text.trim();
+
+    statusEl.style.display = 'none';
+    resultEl.style.display = 'block';
+    resultEl.textContent = lastCompleteText;
+    saveBtns.style.display = 'flex';
+    goBtn.disabled = false;
+    goBtn.textContent = '🔄 다시 생성';
+  } catch(err){
+    statusEl.innerHTML = `❌ 오류: ${err.message}`;
+    goBtn.disabled = false;
+    goBtn.textContent = '🤖 생성하기';
+  }
+}
+
+function saveCompleteToSec(){
+  if(!lastCompleteText) return;
+  const p = curPerf(); if(!p) return;
+  const iconMap = {'발표 대본':'🎤','완성 보고서':'📄','핵심 요약':'📝','예상 Q&A':'❓','PPT 구성안':'🖼','생성 문서':'📄'};
+  let sec = p.sections.find(s=>s.label===lastCompleteLabel);
+  if(!sec){
+    sec = {id:'s_gen_'+Date.now(), icon:iconMap[lastCompleteLabel]||'📄', label:lastCompleteLabel, open:true, content:''};
+    p.sections.push(sec);
+  }
+  sec.content = lastCompleteText;
+  sec.open = true;
+  curSecId = sec.id;
+  save();
+  closeM('m-complete');
+  renderDetail();
+}
+
+function downloadCompleteFile(){
+  if(!lastCompleteText) return;
+  const p = curPerf(); const sub = findSub(curSubId);
+  const filename = `${p?.name||'문서'}_${lastCompleteLabel}.txt`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lastCompleteText],{type:'text/plain;charset=utf-8'}));
+  a.download = filename;
+  a.click();
+}
+
+// ── 내보내기 ──
+function exportAll(){
+  let md='# 수행평가 노트\n\n';
+  D.subjects.forEach(sub=>{
+    md+=`# ${sub.icon} ${sub.name}\n\n`;
+    GRADES.forEach(g=>{
+      const perfs=sub.grades[g]?.perfs||[];
+      if(perfs.length){
+        md+=`## ${g}\n\n`;
+        perfs.forEach(p=>{
+          md+=`### ${p.name} (${p.type})\n`;
+          if(p.score)md+=`**점수:** ${p.score}/${p.maxScore} | **등수:** ${p.rank||'미입력'}\n\n`;
+          p.sections.forEach(s=>{if(s.content?.trim())md+=`#### ${s.label}\n\n${s.content.trim()}\n\n`});
+        });
+      }
+    });
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));
+  a.download='수행평가_노트.md';a.click();
+}
+
+// ── 모달 ──
+function openM(id){document.getElementById(id).classList.add('open');setTimeout(()=>{const inp=document.querySelector(`#${id} input`);if(inp)inp.focus()},100)}
+function closeM(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'))});
+
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ── 초기화 ──
+initStorage();
+</script>
+</body>
+</html>
