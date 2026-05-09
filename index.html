@@ -767,6 +767,7 @@ body{
   <div class="logo">✦ 수행평가 노트</div>
   <div class="breadcrumb" id="breadcrumb"></div>
   <div class="sp"></div>
+  <span id="sync-status" style="font-size:11.5px;color:var(--t3);display:flex;align-items:center;gap:4px;margin-right:8px">☁️ 연결 중...</span>
   <div class="top-btns">
     <button class="tbtn" onclick="exportAll()">📄 내보내기</button>
     <button class="tbtn primary" onclick="openM('m-subject')">+ 과목 추가</button>
@@ -1132,39 +1133,102 @@ function defaultData(){
   ]};
 }
 
-// ── 저장 (localStorage만 사용) ──
+// ── Supabase 연동 ──
+const SB_URL  = 'https://zndawahireywthowcqhx.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpuZGF3YWhpcmV5d3Rob3djcWh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMDU4MTgsImV4cCI6MjA5Mzg4MTgxOH0.J8y6-tkcwKWHu5w1m7X9wOJgzKFcjKUMxm2AlrSIKdc';
+const SB_HEADERS = { 'Content-Type':'application/json', 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY };
+const DB_KEY = 'main_data';
+
 let D = defaultData();
 let storageReady = false;
+let syncTimer = null;
 
-function loadFromStorage(){
+function setSyncStatus(status){
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  const map = {
+    syncing: ['🔄','동기화 중...','var(--t3)'],
+    ok:      ['☁️','저장됨','var(--grn,#2ecc87)'],
+    offline: ['💾','로컬 저장','var(--t3)'],
+    error:   ['⚠️','동기화 실패','var(--peach,#f59e0b)'],
+  };
+  const [icon, txt, color] = map[status] || map.offline;
+  el.innerHTML = `<span>${icon}</span> ${txt}`;
+  el.style.color = color;
+}
+
+async function sbGet(){
+  const r = await fetch(`${SB_URL}/rest/v1/app_data?key=eq.${DB_KEY}&select=value`, { headers: SB_HEADERS });
+  if(!r.ok) throw new Error('fetch failed');
+  const rows = await r.json();
+  return rows[0]?.value || null;
+}
+
+async function sbSet(val){
+  const r = await fetch(`${SB_URL}/rest/v1/app_data`, {
+    method: 'POST',
+    headers: { ...SB_HEADERS, 'Prefer':'resolution=merge-duplicates' },
+    body: JSON.stringify({ key: DB_KEY, value: val })
+  });
+  if(!r.ok) throw new Error('upsert failed');
+}
+
+async function initStorage(){
+  // 1) 로컬 먼저 로드해서 일단 화면 그리기
   try {
-    const r = localStorage.getItem(STORAGE_KEY);
-    if(r){
-      const parsed = JSON.parse(r);
-      // 새 과목 병합
-      const existingIds = parsed.subjects.map(s=>s.id);
-      defaultData().subjects.forEach(ds=>{
-        if(!existingIds.includes(ds.id)) parsed.subjects.push(ds);
-      });
+    const local = localStorage.getItem(STORAGE_KEY);
+    if(local){
+      const parsed = JSON.parse(local);
+      mergeDefaults(parsed);
       D = parsed;
     }
-  } catch(e){
-    console.warn('Storage load failed, using default:', e);
-  }
+  } catch(e){}
   storageReady = true;
   renderSubjects();
+  setSyncStatus('syncing');
+
+  // 2) Supabase에서 최신 데이터 가져오기
+  try {
+    const remote = await sbGet();
+    if(remote){
+      const parsed = JSON.parse(remote);
+      mergeDefaults(parsed);
+      D = parsed;
+      localStorage.setItem(STORAGE_KEY, remote);
+      renderSubjects();
+      setSyncStatus('ok');
+    } else {
+      // 첫 기기 — 로컬 데이터 올리기
+      await sbSet(JSON.stringify(D));
+      setSyncStatus('ok');
+    }
+  } catch(e){
+    console.warn('Supabase 연결 실패, 로컬 모드:', e);
+    setSyncStatus('offline');
+  }
+}
+
+function mergeDefaults(parsed){
+  const existingIds = parsed.subjects.map(s=>s.id);
+  defaultData().subjects.forEach(ds=>{
+    if(!existingIds.includes(ds.id)) parsed.subjects.push(ds);
+  });
 }
 
 function save(){
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(D));
-  } catch(e){
-    console.warn('Save failed:', e);
-  }
-}
-
-function initStorage(){
-  loadFromStorage();
+  // 로컬 즉시 저장
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(D)); } catch(e){}
+  // Supabase는 디바운스 (1.5초 후 한 번만)
+  clearTimeout(syncTimer);
+  setSyncStatus('syncing');
+  syncTimer = setTimeout(async ()=>{
+    try {
+      await sbSet(JSON.stringify(D));
+      setSyncStatus('ok');
+    } catch(e){
+      setSyncStatus('error');
+    }
+  }, 1500);
 }
 
 // ── 현재 상태 ──
