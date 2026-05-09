@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+]<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1231,7 +1231,7 @@ function save(){
   }, 1500);
 }
 
-// ── 현재 상태 ──
+const AI_ENDPOINT = 'https://claude-proxy.hjw260505.workers.dev';
 let curSubId = null;
 let curGrade = null;
 let curPerfId = null;
@@ -1745,7 +1745,7 @@ async function askAI(preset){
   resultEl.innerHTML=`<div class="ai-result"><div class="typing"><span></span><span></span><span></span></div></div>`;
 
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    const resp=await fetch(AI_ENDPOINT,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -2117,7 +2117,7 @@ async function doComplete(){
   const labelIcon = matched ? matched[1] : '📄';
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch(AI_ENDPOINT, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
