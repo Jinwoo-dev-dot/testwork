@@ -1229,7 +1229,23 @@ function save(){
   }, 1500);
 }
 
-const AI_ENDPOINT = 'https://claude-proxy.hjw260505.workers.dev';
+const AI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_KEY = 'AIzaSyBf12tQg6LGth33X7mpDKwNTfZcCmxOlwM';
+
+async function callAI(system, userMsg) {
+  const resp = await fetch(`${AI_ENDPOINT}?key=${GEMINI_KEY}`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: system }] },
+      contents: [{ role: 'user', parts: [{ text: userMsg }] }],
+      generationConfig: { maxOutputTokens: 1500 }
+    })
+  });
+  const data = await resp.json();
+  if (!resp.ok || data.error) throw new Error(data.error?.message || JSON.stringify(data).slice(0,200));
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
 let curSubId = null;
 let curGrade = null;
 let curPerfId = null;
@@ -1751,13 +1767,7 @@ async function askAI(preset){
   resultEl.innerHTML=`<div class="ai-result"><div class="typing"><span></span><span></span><span></span></div></div>`;
 
   try{
-    const resp=await fetch(AI_ENDPOINT,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        system:`너는 수행평가 자료를 정리해주는 AI야.
+    const systemPrompt = `너는 수행평가 자료를 정리해주는 AI야.
 수행평가: "${p.name}" (${p.type}), 과목: ${sub.icon}${sub.name}
 현재 편집 중인 섹션: [${sec.label}]
 기존 내용: ${sec.content?.slice(0,300)||'없음'}
@@ -1765,32 +1775,16 @@ async function askAI(preset){
 
 요청에 맞게 [${sec.label}] 섹션 내용을 한국어로 깔끔하게 정리해줘.
 마크다운 헤더(#) 없이, 줄바꿈과 bullet(•, -, ①②③)만 사용해.
-내용만 바로 출력해, 설명이나 안내 없이.`,
-        messages:[{role:'user',content:msg}]
-      })
-    });
-    const data=await resp.json();
+내용만 바로 출력해, 설명이나 안내 없이.`;
 
-    if(!resp.ok||data.error){
-      resultEl.innerHTML=`<div class="ai-result" style="color:#dc2626">❌ API 오류 (${resp.status}): ${data.error?.message||JSON.stringify(data).slice(0,200)}</div>`;
-      if(sendBtn)sendBtn.disabled=false;
-      return;
-    }
+    const text = await callAI(systemPrompt, msg);
 
-    const text=data.content?.map(c=>c.text||'').join('')||'';
-
-    // 섹션에 자동 삽입
-    sec.content=text.trim();
+    sec.content = text.trim();
     save();
-
-    // 에디터 업데이트
-    const ed=document.getElementById('main-editor');
-    if(ed)ed.innerText=sec.content;
-
-    // 사이드바 pill 업데이트
+    const ed = document.getElementById('main-editor');
+    if(ed) ed.innerText = sec.content;
     renderDetailSidebar();
-
-    resultEl.innerHTML=`<div class="ai-result">✅ <strong>[${sec.label}]</strong> 섹션에 정리했어요!</div>`;
+    resultEl.innerHTML = `<div class="ai-result">✅ <strong>[${sec.label}]</strong> 섹션에 정리했어요!</div>`;
   }catch(e){
     resultEl.innerHTML=`<div class="ai-result" style="color:#dc2626">오류: ${e.message}</div>`;
   }
@@ -2131,42 +2125,16 @@ async function doComplete(){
   const labelIcon = matched ? matched[1] : '📄';
 
   try {
-    const resp = await fetch(AI_ENDPOINT, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: `너는 수행평가 문서를 완성해주는 전문가야.
+    const systemPrompt = `너는 수행평가 문서를 완성해주는 전문가야.
 과목: ${sub.icon}${sub.name}, 수행평가: "${p.name}"
 아래는 지금까지 정리된 내용이야:
 
 ${allContent || '(내용 없음 — 창의적으로 작성해줘)'}
 
-한국어로 작성하고, 마크다운 헤더(#, ##) 없이 깔끔하게 작성해. 내용만 바로 시작해.`,
-        messages: [{role:'user', content: msg}]
-      })
-    });
-    const data = await resp.json();
+한국어로 작성하고, 마크다운 헤더(#, ##) 없이 깔끔하게 작성해. 내용만 바로 시작해.`;
 
-    // API 에러 상세 표시
-    if(!resp.ok || data.error){
-      const errMsg = data.error?.message || JSON.stringify(data);
-      statusEl.style.display = 'block';
-      statusEl.innerHTML = `❌ API 오류 (${resp.status}): ${errMsg}`;
-      goBtn.disabled = false;
-      goBtn.textContent = '🤖 생성하기';
-      return;
-    }
-
-    const text = data.content?.map(c=>c.text||'').join('') || '';
-    if(!text){
-      statusEl.style.display = 'block';
-      statusEl.innerHTML = `❌ 빈 응답: ${JSON.stringify(data).slice(0,200)}`;
-      goBtn.disabled = false;
-      goBtn.textContent = '🤖 생성하기';
-      return;
-    }
+    const text = await callAI(systemPrompt, msg);
+    if(!text) throw new Error('빈 응답');
     lastCompleteText = text.trim();
 
     statusEl.style.display = 'none';
