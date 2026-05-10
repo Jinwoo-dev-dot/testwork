@@ -1250,9 +1250,10 @@ async function callAI(system, userMsg) {
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: combined }] }],
       generationConfig: {
-        maxOutputTokens: 8192,
-        temperature: 0.7
-      }
+        maxOutputTokens: 65536,
+        temperature: 1.0
+      },
+      thinkingConfig: { thinkingBudget: 0 }
     })
   });
   const data = await resp.json();
@@ -1792,12 +1793,12 @@ async function askAI(preset){
 기존 내용: ${sec.content?.slice(0,300)||'없음'}
 전체 맥락: ${ctx.slice(0,600)||'없음'}
 
-[중요 지시사항]
-- 요청에 맞게 [${sec.label}] 섹션 내용을 한국어로 충분히 자세하게 정리해줘.
-- 절대 짧게 요약하지 말고, 내용을 풍부하고 상세하게 작성해.
-- 마크다운 헤더(#) 없이, 줄바꿈과 bullet(•, -, ①②③)만 사용해.
-- 설명이나 안내 문구 없이 내용만 바로 출력해.
-- 최소 10줄 이상 작성해.`;
+[절대 규칙]
+- 요청받은 내용을 가능한 한 최대한 길고 상세하게 작성해. 분량 제한 없음.
+- 절대로 짧게 쓰지 마. 내용을 최대한 풍부하게 확장해서 써.
+- 소제목, 세부 항목, 예시, 배경 설명까지 모두 포함해서 완성도 있게 작성해.
+- 마크다운 헤더(#) 없이 줄바꿈과 bullet(•, -, ①②③)만 사용해.
+- 설명이나 안내 없이 내용만 바로 시작해.`;
 
     const text = await callAI(systemPrompt, msg);
 
@@ -2153,12 +2154,12 @@ async function doComplete(){
 
 ${allContent || '(내용 없음 — 창의적으로 작성해줘)'}
 
-[중요 지시사항]
-- 위 내용을 바탕으로 요청한 문서를 한국어로 충분히 길고 상세하게 작성해.
-- 절대 짧게 요약하거나 생략하지 말고 완성도 있게 작성해.
+[절대 규칙]
+- 위 내용을 바탕으로 요청한 문서를 가능한 한 최대한 길고 상세하게 작성해. 분량 제한 없음.
+- 절대로 짧게 쓰지 마. 각 항목마다 충분한 설명, 근거, 예시를 포함해.
+- 발표 대본이면 실제 말하는 것처럼 자연스럽게 완성해. 생략 없이 처음부터 끝까지.
 - 마크다운 헤더(#, ##) 없이 깔끔하게 작성해.
-- 내용만 바로 시작해, 설명이나 안내 문구 없이.
-- 최소 20줄 이상 작성해.`;
+- 내용만 바로 시작해, 설명이나 안내 없이.`;
 
     const text = await callAI(systemPrompt, msg);
     if(!text) throw new Error('빈 응답');
