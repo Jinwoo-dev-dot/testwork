@@ -769,6 +769,7 @@ body{
   <div class="sp"></div>
   <span id="sync-status" style="font-size:11.5px;color:var(--t3);display:flex;align-items:center;gap:4px;margin-right:8px">☁️ 연결 중...</span>
   <div class="top-btns">
+    <button class="tbtn" onclick="setApiKey()" title="Gemini API 키 설정">🔑 API 키</button>
     <button class="tbtn" onclick="exportAll()">📄 내보내기</button>
     <button class="tbtn primary" onclick="openM('m-subject')">+ 과목 추가</button>
   </div>
@@ -1230,9 +1231,15 @@ function save(){
 }
 
 const AI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-const GEMINI_KEY = 'AIzaSyBf12tQg6LGth33X7mpDKwNTfZcCmxOlwM';
+let GEMINI_KEY = localStorage.getItem('gemini_key') || '';
 
 async function callAI(system, userMsg) {
+  if(!GEMINI_KEY){
+    const key = prompt('Gemini API 키를 입력하세요:\n(aistudio.google.com/app/apikey 에서 발급)');
+    if(!key) throw new Error('API 키가 없어요');
+    GEMINI_KEY = key.trim();
+    localStorage.setItem('gemini_key', GEMINI_KEY);
+  }
   const resp = await fetch(`${AI_ENDPOINT}?key=${GEMINI_KEY}`, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
@@ -1243,7 +1250,14 @@ async function callAI(system, userMsg) {
     })
   });
   const data = await resp.json();
-  if (!resp.ok || data.error) throw new Error(data.error?.message || JSON.stringify(data).slice(0,200));
+  if (!resp.ok || data.error) {
+    // 키 오류면 저장된 키 삭제
+    if(resp.status === 400 || resp.status === 401 || resp.status === 403){
+      localStorage.removeItem('gemini_key');
+      GEMINI_KEY = '';
+    }
+    throw new Error(data.error?.message || JSON.stringify(data).slice(0,200));
+  }
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 let curSubId = null;
@@ -2199,6 +2213,21 @@ function exportAll(){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));
   a.download='수행평가_노트.md';a.click();
+}
+
+function setApiKey(){
+  const current = localStorage.getItem('gemini_key');
+  const key = prompt('Gemini API 키를 입력하세요:\n(aistudio.google.com/app/apikey 에서 발급)\n\n현재: ' + (current ? current.slice(0,8)+'...' : '없음'));
+  if(key === null) return;
+  if(key.trim()){
+    GEMINI_KEY = key.trim();
+    localStorage.setItem('gemini_key', GEMINI_KEY);
+    alert('✅ API 키가 저장됐어요!');
+  } else {
+    GEMINI_KEY = '';
+    localStorage.removeItem('gemini_key');
+    alert('API 키가 삭제됐어요.');
+  }
 }
 
 // ── 모달 ──
