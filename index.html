@@ -1246,7 +1246,7 @@ async function callAI(system, userMsg) {
     body: JSON.stringify({
       system_instruction: { parts: [{ text: system }] },
       contents: [{ role: 'user', parts: [{ text: userMsg }] }],
-      generationConfig: { maxOutputTokens: 1500 }
+      generationConfig: { maxOutputTokens: 8192 }
     })
   });
   const data = await resp.json();
